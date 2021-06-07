@@ -13,10 +13,11 @@ data "aws_availability_zones" "available" {
 resource "tls_private_key" "newkey" {
   algorithm = "RSA"
   rsa_bits  = 4096
+}
 
-  provisioner "local-exec" {
-    command = "echo '${self.private_key_pem}' > ~/.ssh/${var.projectPrefix}-key-${random_id.buildSuffix.hex}.pem"
-  }
+resource "local_file" "newkey_pem" { 
+  filename = "${path.module}/.ssh/${var.projectPrefix}-key-${random_id.buildSuffix.hex}.pem"
+  sensitive_content = tls_private_key.newkey.private_key_pem
 }
 
 resource "aws_key_pair" "deployer" {
@@ -24,8 +25,9 @@ resource "aws_key_pair" "deployer" {
   public_key = tls_private_key.newkey.public_key_openssh
 }
 
-data "external" "whatismyip" {
-  program = ["/bin/bash" , "${path.module}/whatismyip.sh"]
+data "http" "ip_address" {
+  url             = var.get_address_url
+  request_headers = var.get_address_request_headers
 }
 
 data "aws_caller_identity" "current" {}
@@ -91,7 +93,7 @@ resource "aws_default_security_group" "securityServicesSG" {
     protocol = -1
     from_port = 0
     to_port = 0
-    cidr_blocks = [format("%s/%s",data.external.whatismyip.result["internet_ip"],32)]
+    cidr_blocks = [format("%s/%s",data.http.ip_address.body,32)]
   }
 
   egress {
@@ -177,17 +179,8 @@ resource "aws_network_interface" "F5_BIGIP_AZ1ENI_DATA" {
 
 resource "aws_network_interface" "F5_BIGIP_AZ1ENI_MGMT" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ1.id
-  source_dest_check = false
   tags = {
     Name = "F5_BIGIP_AZ1ENI"
-  }
-}
-
-resource "aws_eip" "F5_BIGIP_AZ1EIP" {
-  vpc = true
-  network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
-  tags = {
-    Name = "F5_BIGIP_AZ1EIP"
   }
 }
 
@@ -210,6 +203,15 @@ resource "aws_instance" "F5_BIGIP_AZ1" {
   }
 }
 
+resource "aws_eip" "F5_BIGIP_AZ1EIP" {
+  vpc = true
+  network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.private_ip
+  tags = {
+    Name = "F5_BIGIP_AZ1EIP"
+  }
+}
+
 ##
 ## AZ2 F5 BIG-IP Instance
 ##
@@ -224,17 +226,8 @@ resource "aws_network_interface" "F5_BIGIP_AZ2ENI_DATA" {
 
 resource "aws_network_interface" "F5_BIGIP_AZ2ENI_MGMT" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ2.id
-  source_dest_check = false
   tags = {
     Name = "F5_BIGIP_AZ2ENI"
-  }
-}
-
-resource "aws_eip" "F5_BIGIP_AZ2EIP" {
-  vpc = true
-  network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.id
-  tags = {
-    Name = "F5_BIGIP_AZ2EIP"
   }
 }
 
@@ -254,6 +247,15 @@ resource "aws_instance" "F5_BIGIP_AZ2" {
   }
   tags = {
     Name = "${var.projectPrefix}-F5_BIGIP_AZ2-${random_id.buildSuffix.hex}"
+  }
+}
+
+resource "aws_eip" "F5_BIGIP_AZ2EIP" {
+  vpc = true
+  network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.private_ip
+  tags = {
+    Name = "F5_BIGIP_AZ2EIP"
   }
 }
 
@@ -382,7 +384,7 @@ resource "aws_default_security_group" "juiceShopAppSG" {
     protocol = -1
     from_port = 0
     to_port = 0
-    cidr_blocks = [format("%s/%s",data.external.whatismyip.result["internet_ip"],32)]
+    cidr_blocks = [format("%s/%s",data.http.ip_address.body,32)]
   }
 
   egress {
@@ -441,14 +443,6 @@ resource "aws_network_interface" "juiceShopAppAZ1ENI" {
   }
 }
 
-resource "aws_eip" "juiceShopAppAZ1EIP" {
-  vpc = true
-  network_interface = aws_network_interface.juiceShopAppAZ1ENI.id
-  tags = {
-    Name = "juiceShopAppAZ1EIP"
-  }
-}
-
 resource "aws_instance" "juiceShopAppAZ1" {
   ami               = data.aws_ami.ubuntu.id
   instance_type     = "m5.xlarge"
@@ -456,7 +450,6 @@ resource "aws_instance" "juiceShopAppAZ1" {
   key_name          = aws_key_pair.deployer.id
 	user_data = <<-EOF
               #!/bin/bash
-              whoami
               sudo apt update
               sudo apt -y upgrade
               sudo apt -y install apt-transport-https ca-certificates curl software-properties-common docker
@@ -479,6 +472,15 @@ resource "aws_instance" "juiceShopAppAZ1" {
   }
 }
 
+resource "aws_eip" "juiceShopAppAZ1EIP" {
+  vpc = true
+  network_interface = aws_network_interface.juiceShopAppAZ1ENI.id
+  associate_with_private_ip = aws_network_interface.juiceShopAppAZ1ENI.private_ip
+  tags = {
+    Name = "juiceShopAppAZ1EIP"
+  }
+}
+
 ##
 ## Juice Shop AZ2
 ##
@@ -487,14 +489,6 @@ resource "aws_network_interface" "juiceShopAppAZ2ENI" {
   subnet_id       = aws_subnet.juiceShopAppSubnetAZ2.id
   tags = {
     Name = "juiceShopAppAZ2ENI"
-  }
-}
-
-resource "aws_eip" "juiceShopAppAZ2EIP" {
-  vpc = true
-  network_interface = aws_network_interface.juiceShopAppAZ2ENI.id
-  tags = {
-    Name = "juiceShopAppAZ2EIP"
   }
 }
 
@@ -522,9 +516,17 @@ resource "aws_instance" "juiceShopAppAZ2" {
     network_interface_id = aws_network_interface.juiceShopAppAZ2ENI.id
     device_index = 0
   }
-
   tags = {
     Name = "${var.projectPrefix}-juiceShopAppAZ2-${random_id.buildSuffix.hex}"
+  }
+}
+
+resource "aws_eip" "juiceShopAppAZ2EIP" {
+  vpc = true
+  network_interface = aws_network_interface.juiceShopAppAZ2ENI.id
+  associate_with_private_ip = aws_network_interface.juiceShopAppAZ2ENI.private_ip
+  tags = {
+    Name = "juiceShopAppAZ2EIP"
   }
 }
 
@@ -712,7 +714,7 @@ resource "aws_default_security_group" "juiceShopAPISG" {
     protocol = -1
     from_port = 0
     to_port = 0
-    cidr_blocks = [format("%s/%s",data.external.whatismyip.result["internet_ip"],32)]
+    cidr_blocks = [format("%s/%s",data.http.ip_address.body,32)]
   }
 
   egress {
@@ -771,15 +773,6 @@ resource "aws_network_interface" "juiceShopAPIAZ1ENI" {
   }
 }
 
-resource "aws_eip" "juiceShopAPIAZ1EIP" {
-  vpc = true
-  network_interface = aws_network_interface.juiceShopAPIAZ1ENI.id
-
-  tags = {
-    Name = "juiceShopAPIAZ1EIP"
-  }
-}
-
 resource "aws_instance" "juiceShopAPIAZ1" {
   ami               = data.aws_ami.ubuntu.id
   instance_type     = "m5.xlarge"
@@ -787,7 +780,6 @@ resource "aws_instance" "juiceShopAPIAZ1" {
   key_name          = aws_key_pair.deployer.id
 	user_data = <<-EOF
               #!/bin/bash
-              whoami
               sudo apt update
               sudo apt -y upgrade
               sudo apt -y install apt-transport-https ca-certificates curl software-properties-common docker
@@ -810,6 +802,15 @@ resource "aws_instance" "juiceShopAPIAZ1" {
   }
 }
 
+resource "aws_eip" "juiceShopAPIAZ1EIP" {
+  vpc = true
+  network_interface = aws_network_interface.juiceShopAPIAZ1ENI.id
+  associate_with_private_ip = aws_network_interface.juiceShopAPIAZ1ENI.private_ip
+  tags = {
+    Name = "juiceShopAPIAZ1EIP"
+  }
+}
+
 ##
 ## Juice Shop API AZ2
 ##
@@ -818,14 +819,6 @@ resource "aws_network_interface" "juiceShopAPIAZ2ENI" {
   subnet_id       = aws_subnet.juiceShopAPISubnetAZ2.id
   tags = {
     Name = "juiceShopAPIAZ2ENI"
-  }
-}
-
-resource "aws_eip" "juiceShopAPIAZ2EIP" {
-  vpc = true
-  network_interface = aws_network_interface.juiceShopAPIAZ2ENI.id
-  tags = {
-    Name = "juiceShopAPIAZ2EIP"
   }
 }
 
@@ -855,6 +848,15 @@ resource "aws_instance" "juiceShopAPIAZ2" {
   }
   tags = {
     Name = "${var.projectPrefix}-juiceShopAPIAZ2-${random_id.buildSuffix.hex}"
+  }
+}
+
+resource "aws_eip" "juiceShopAPIAZ2EIP" {
+  vpc = true
+  network_interface = aws_network_interface.juiceShopAPIAZ2ENI.id
+  associate_with_private_ip = aws_network_interface.juiceShopAPIAZ2ENI.private_ip
+  tags = {
+    Name = "juiceShopAPIAZ2EIP"
   }
 }
 

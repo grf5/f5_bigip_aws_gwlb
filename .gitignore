@@ -1,6 +1,7 @@
 # keys
 *.pem
 **/*.pem
+.ssh
 
 # Custom config files
 admin.auto.tfvars

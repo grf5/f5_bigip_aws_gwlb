@@ -3,14 +3,12 @@
 ## Overview
 This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE deployed in an AWS Gateway Load Balancer (GWLB) Configuration
 
-## Getting Started
-#. Copy admin.auto.tfvars.example to admin.auto.tfvars and populate all variables with valid values.
-
 ## Usage
-Outline how the user can use your project and the various features the project offers. 
+#. Copy admin.auto.tfvars.example to admin.auto.tfvars and populate all variables with valid values.
+#. Execute the "./setup.sh" shell script to deploy.
 
 ## Development
-Outline any requirements to setup a development environment if someone would like to contribute.  You may also link to another file for this information. 
+Requires Terraform 0.15.5 and AWS provider 0.3.44 (as of June 2021)
 
 ## Support
 This project offers no official support from F5 and is best-effort by the community.
