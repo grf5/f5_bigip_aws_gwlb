@@ -18,6 +18,7 @@ resource "tls_private_key" "newkey" {
 resource "local_file" "newkey_pem" { 
   filename = "${path.module}/.ssh/${var.projectPrefix}-key-${random_id.buildSuffix.hex}.pem"
   sensitive_content = tls_private_key.newkey.private_key_pem
+  file_permission = "0644"
 }
 
 resource "aws_key_pair" "deployer" {
@@ -184,6 +185,25 @@ resource "aws_network_interface" "F5_BIGIP_AZ1ENI_MGMT" {
   }
 }
 
+resource "time_sleep" "F5_BIGIP_AZ1EIPdelay" {
+  create_duration = "30s"
+  depends_on = [
+    aws_network_interface.F5_BIGIP_AZ1ENI_DATA
+  ]
+}
+
+resource "aws_eip" "F5_BIGIP_AZ1EIP" {
+  vpc = true
+  network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.private_ip
+  depends_on = [
+    time_sleep.F5_BIGIP_AZ1EIPdelay
+  ]
+  tags = {
+    Name = "F5_BIGIP_AZ1EIP"
+  }
+}
+
 resource "aws_instance" "F5_BIGIP_AZ1" {
   ami               = data.aws_ami.f5BigIP_GWLB_AMI.id
   instance_type     = "c5.xlarge"
@@ -198,17 +218,11 @@ resource "aws_instance" "F5_BIGIP_AZ1" {
     network_interface_id = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.id
     device_index = 1
   }
+  depends_on = [
+    aws_eip.F5_BIGIP_AZ1EIP
+  ]
   tags = {
     Name = "${var.projectPrefix}-F5_BIGIP_AZ1-${random_id.buildSuffix.hex}"
-  }
-}
-
-resource "aws_eip" "F5_BIGIP_AZ1EIP" {
-  vpc = true
-  network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
-  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.private_ip
-  tags = {
-    Name = "F5_BIGIP_AZ1EIP"
   }
 }
 
@@ -231,6 +245,25 @@ resource "aws_network_interface" "F5_BIGIP_AZ2ENI_MGMT" {
   }
 }
 
+resource "time_sleep" "F5_BIGIP_AZ2EIPdelay" {
+  create_duration = "30s"
+  depends_on = [
+    aws_network_interface.F5_BIGIP_AZ2ENI_DATA
+  ]
+}
+
+resource "aws_eip" "F5_BIGIP_AZ2EIP" {
+  vpc = true
+  network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.private_ip
+  depends_on = [
+    time_sleep.F5_BIGIP_AZ2EIPdelay
+  ]
+  tags = {
+    Name = "F5_BIGIP_AZ2EIP"
+  }
+}
+
 resource "aws_instance" "F5_BIGIP_AZ2" {
   ami               = data.aws_ami.f5BigIP_GWLB_AMI.id
   instance_type     = "c5.xlarge"
@@ -245,17 +278,11 @@ resource "aws_instance" "F5_BIGIP_AZ2" {
     network_interface_id = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.id
     device_index = 1
   }
+  depends_on = [
+    aws_eip.F5_BIGIP_AZ2EIP
+  ]
   tags = {
     Name = "${var.projectPrefix}-F5_BIGIP_AZ2-${random_id.buildSuffix.hex}"
-  }
-}
-
-resource "aws_eip" "F5_BIGIP_AZ2EIP" {
-  vpc = true
-  network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.id
-  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.private_ip
-  tags = {
-    Name = "F5_BIGIP_AZ2EIP"
   }
 }
 
@@ -443,6 +470,25 @@ resource "aws_network_interface" "juiceShopAppAZ1ENI" {
   }
 }
 
+resource "time_sleep" "juiceShopAppAZ1EIPdelay" {
+  create_duration = "30s"
+  depends_on = [
+    aws_network_interface.juiceShopAppAZ1ENI
+  ]
+}
+
+resource "aws_eip" "juiceShopAppAZ1EIP" {
+  vpc = true
+  network_interface = aws_network_interface.juiceShopAppAZ1ENI.id
+  associate_with_private_ip = aws_network_interface.juiceShopAppAZ1ENI.private_ip
+  depends_on = [
+    time_sleep.juiceShopAppAZ1EIPdelay
+  ]
+  tags = {
+    Name = "juiceShopAppAZ1EIP"
+  }
+}
+
 resource "aws_instance" "juiceShopAppAZ1" {
   ami               = data.aws_ami.ubuntu.id
   instance_type     = "m5.xlarge"
@@ -467,17 +513,11 @@ resource "aws_instance" "juiceShopAppAZ1" {
     network_interface_id = aws_network_interface.juiceShopAppAZ1ENI.id
     device_index = 0
   }
+  depends_on = [
+    aws_eip.juiceShopAppAZ1EIP
+  ]
   tags = {
     Name = "${var.projectPrefix}-juiceShopAppAZ1-${random_id.buildSuffix.hex}"
-  }
-}
-
-resource "aws_eip" "juiceShopAppAZ1EIP" {
-  vpc = true
-  network_interface = aws_network_interface.juiceShopAppAZ1ENI.id
-  associate_with_private_ip = aws_network_interface.juiceShopAppAZ1ENI.private_ip
-  tags = {
-    Name = "juiceShopAppAZ1EIP"
   }
 }
 
@@ -489,6 +529,25 @@ resource "aws_network_interface" "juiceShopAppAZ2ENI" {
   subnet_id       = aws_subnet.juiceShopAppSubnetAZ2.id
   tags = {
     Name = "juiceShopAppAZ2ENI"
+  }
+}
+
+resource "time_sleep" "juiceShopAppAZ2EIPdelay" {
+  create_duration = "30s"
+  depends_on = [
+    aws_network_interface.juiceShopAppAZ2ENI
+  ]
+}
+
+resource "aws_eip" "juiceShopAppAZ2EIP" {
+  vpc = true
+  network_interface = aws_network_interface.juiceShopAppAZ2ENI.id
+  associate_with_private_ip = aws_network_interface.juiceShopAppAZ2ENI.private_ip
+  depends_on = [
+    time_sleep.juiceShopAppAZ2EIPdelay
+  ]
+  tags = {
+    Name = "juiceShopAppAZ2EIP"
   }
 }
 
@@ -516,17 +575,11 @@ resource "aws_instance" "juiceShopAppAZ2" {
     network_interface_id = aws_network_interface.juiceShopAppAZ2ENI.id
     device_index = 0
   }
+  depends_on = [
+    aws_eip.juiceShopAppAZ2EIP
+  ]
   tags = {
     Name = "${var.projectPrefix}-juiceShopAppAZ2-${random_id.buildSuffix.hex}"
-  }
-}
-
-resource "aws_eip" "juiceShopAppAZ2EIP" {
-  vpc = true
-  network_interface = aws_network_interface.juiceShopAppAZ2ENI.id
-  associate_with_private_ip = aws_network_interface.juiceShopAppAZ2ENI.private_ip
-  tags = {
-    Name = "juiceShopAppAZ2EIP"
   }
 }
 
@@ -773,6 +826,22 @@ resource "aws_network_interface" "juiceShopAPIAZ1ENI" {
   }
 }
 
+resource "time_sleep" "juiceShopAPIAZ1EIPdelay" {
+  create_duration = "30s"
+  depends_on = [
+    aws_network_interface.juiceShopAPIAZ1ENI
+  ]
+}
+
+resource "aws_eip" "juiceShopAPIAZ1EIP" {
+  vpc = true
+  network_interface = aws_network_interface.juiceShopAPIAZ1ENI.id
+  associate_with_private_ip = aws_network_interface.juiceShopAPIAZ1ENI.private_ip
+  tags = {
+    Name = "juiceShopAPIAZ1EIP"
+  }
+}
+
 resource "aws_instance" "juiceShopAPIAZ1" {
   ami               = data.aws_ami.ubuntu.id
   instance_type     = "m5.xlarge"
@@ -797,17 +866,11 @@ resource "aws_instance" "juiceShopAPIAZ1" {
     network_interface_id = aws_network_interface.juiceShopAPIAZ1ENI.id
     device_index = 0
   }
+  depends_on = [
+    aws_eip.juiceShopAPIAZ1EIP
+  ]
   tags = {
     Name = "${var.projectPrefix}-juiceShopAPIAZ1-${random_id.buildSuffix.hex}"
-  }
-}
-
-resource "aws_eip" "juiceShopAPIAZ1EIP" {
-  vpc = true
-  network_interface = aws_network_interface.juiceShopAPIAZ1ENI.id
-  associate_with_private_ip = aws_network_interface.juiceShopAPIAZ1ENI.private_ip
-  tags = {
-    Name = "juiceShopAPIAZ1EIP"
   }
 }
 
@@ -819,6 +882,25 @@ resource "aws_network_interface" "juiceShopAPIAZ2ENI" {
   subnet_id       = aws_subnet.juiceShopAPISubnetAZ2.id
   tags = {
     Name = "juiceShopAPIAZ2ENI"
+  }
+}
+
+resource "time_sleep" "juiceShopAPIAZ2EIPdelay" {
+  create_duration = "30s"
+  depends_on = [
+    aws_network_interface.juiceShopAPIAZ2ENI
+  ]
+}
+
+resource "aws_eip" "juiceShopAPIAZ2EIP" {
+  vpc = true
+  network_interface = aws_network_interface.juiceShopAPIAZ2ENI.id
+  associate_with_private_ip = aws_network_interface.juiceShopAPIAZ2ENI.private_ip
+  depends_on = [
+    time_sleep.juiceShopAPIAZ2EIPdelay
+  ]
+  tags = {
+    Name = "juiceShopAPIAZ2EIP"
   }
 }
 
@@ -846,17 +928,11 @@ resource "aws_instance" "juiceShopAPIAZ2" {
     network_interface_id = aws_network_interface.juiceShopAPIAZ2ENI.id
     device_index = 0
   }
+  depends_on = [
+    aws_eip.juiceShopAPIAZ2EIP
+  ]
   tags = {
     Name = "${var.projectPrefix}-juiceShopAPIAZ2-${random_id.buildSuffix.hex}"
-  }
-}
-
-resource "aws_eip" "juiceShopAPIAZ2EIP" {
-  vpc = true
-  network_interface = aws_network_interface.juiceShopAPIAZ2ENI.id
-  associate_with_private_ip = aws_network_interface.juiceShopAPIAZ2ENI.private_ip
-  tags = {
-    Name = "juiceShopAPIAZ2EIP"
   }
 }
 

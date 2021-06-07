@@ -24,12 +24,6 @@ variable "awsAz2" {
   type        = string
   default     = null
 }
-variable "adminSecret" {
-  description = "BIG-IP admin user password"
-  type = string
-  default = null
-  sensitive = true
-}
 variable "bigipLicenseAZ1" {
   description = "BIG-IP License for AZ1 instance"
   type = string
