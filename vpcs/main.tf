@@ -207,6 +207,9 @@ resource "aws_eip" "F5_BIGIP_AZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.id
   associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.private_ip
+  depends_on = [
+    aws_instance.F5_BIGIP_AZ1
+  ]
   tags = {
     Name = "F5_BIGIP_AZ1EIP"
   }
@@ -254,6 +257,9 @@ resource "aws_eip" "F5_BIGIP_AZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.id
   associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.private_ip
+  depends_on = [
+    aws_instance.F5_BIGIP_AZ2
+  ]
   tags = {
     Name = "F5_BIGIP_AZ2EIP"
   }
@@ -476,6 +482,9 @@ resource "aws_eip" "juiceShopAppAZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAppAZ1ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAppAZ1ENI.private_ip
+  depends_on = [
+    aws_instance.juiceShopAppAZ1
+  ]
   tags = {
     Name = "juiceShopAppAZ1EIP"
   }
@@ -525,6 +534,9 @@ resource "aws_eip" "juiceShopAppAZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAppAZ2ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAppAZ2ENI.private_ip
+  depends_on = [
+    aws_instance.juiceShopAppAZ2
+  ]
   tags = {
     Name = "juiceShopAppAZ2EIP"
   }
@@ -806,6 +818,9 @@ resource "aws_eip" "juiceShopAPIAZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAPIAZ1ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAPIAZ1ENI.private_ip
+  depends_on = [
+    aws_instance.juiceShopAPIAZ1
+  ]
   tags = {
     Name = "juiceShopAPIAZ1EIP"
   }
@@ -855,6 +870,9 @@ resource "aws_eip" "juiceShopAPIAZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAPIAZ2ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAPIAZ2ENI.private_ip
+  depends_on = [
+    aws_instance.juiceShopAppAZ2
+  ]
   tags = {
     Name = "juiceShopAPIAZ2EIP"
   }
