@@ -1,17 +1,10 @@
-# Solutions Engineering Template Repository
-A template repository that contains all required files (LICENSE, SUPPORT, CONTRIBUTING, etc) as outlined in the org standards.  
-
-
-The sections below are recommended in your project's README.md file. 
+# F5 BIG-IP Terraform Plan for Amazon Web Services Gateway Load Balancer
 
 ## Overview
-Provide a short overview of the project.
+This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE deployed in an AWS Gateway Load Balancer (GWLB) Configuration
 
 ## Getting Started
-Provide a quick example of how to use your code.  This should provide the user with a launch point to quickly see what the project can offer them. 
-
-## Installation
-Outline the requirements and steps to install this project. 
+#. Copy admin.auto.tfvars.example to admin.auto.tfvars and populate all variables with valid values.
 
 ## Usage
 Outline how the user can use your project and the various features the project offers. 
@@ -20,21 +13,18 @@ Outline how the user can use your project and the various features the project o
 Outline any requirements to setup a development environment if someone would like to contribute.  You may also link to another file for this information. 
 
 ## Support
-For support, please open a GitHub issue.  Note, the code in this repository is community supported and is not supported by F5 Networks.  For a complete list of supported projects please reference [SUPPORT.md](SUPPORT.md).
+This project offers no official support from F5 and is best-effort by the community.
 
 ## Community Code of Conduct
 Please refer to the [F5 DevCentral Community Code of Conduct](code_of_conduct.md).
-
 
 ## License
 [Apache License 2.0](LICENSE)
 
 ## Copyright
-Copyright 2014-2020 F5 Networks Inc.
-
+Copyright 2014-2021 F5 Networks Inc.
 
 ### F5 Networks Contributor License Agreement
-
 Before you start contributing to any project sponsored by F5 Networks, Inc. (F5) on GitHub, you will need to sign a Contributor License Agreement (CLA).
 
 If you are signing as an individual, we recommend that you talk to your employer (if applicable) before signing the CLA since some employment agreements may have restrictions on your contributions to other projects.
