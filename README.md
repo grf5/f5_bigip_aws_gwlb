@@ -7,6 +7,22 @@ This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE 
 #. Copy admin.auto.tfvars.example to admin.auto.tfvars and populate all variables with valid values.
 #. Execute the "./setup.sh" shell script to deploy.
 
+## Errors
+There is a known issue in the AWS provider where EIPs cannot be configured because the ENI is not ready yet. **To continue, simply run the ./setup.sh script again and the installation will continue.** If this is an issue for you, please "thumbs up" the issue I created: https://github.com/hashicorp/terraform-provider-aws/issues/19699
+
+Error Message:
+```
+╷
+│ Error: Failure associating EIP: IncorrectInstanceState: The pending-instance-creation instance to which 'eni-0ee36cd9d3c25cd44' is attached is not in a valid state for this operation
+│       status code: 400, request id: 55e6ac47-2e3a-4c60-8e48-bb756f822ba0
+│ 
+│   with aws_eip.F5_BIGIP_AZ2EIP,
+│   on main.tf line 253, in resource "aws_eip" "F5_BIGIP_AZ2EIP":
+│  253: resource "aws_eip" "F5_BIGIP_AZ2EIP" {
+│ 
+╵
+```
+
 ## Development
 Requires Terraform 0.15.5 and AWS provider 0.3.44 (as of June 2021)
 
