@@ -3,6 +3,9 @@
 **/*.pem
 .ssh
 
+# logs
+*.log
+
 # Custom config files
 admin.auto.tfvars
 **/.terraform.lock.hcl

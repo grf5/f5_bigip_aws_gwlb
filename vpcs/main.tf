@@ -18,7 +18,7 @@ resource "tls_private_key" "newkey" {
 resource "local_file" "newkey_pem" { 
   filename = "${path.module}/.ssh/${var.projectPrefix}-key-${random_id.buildSuffix.hex}.pem"
   sensitive_content = tls_private_key.newkey.private_key_pem
-  file_permission = "0644"
+  file_permission = "0400"
 }
 
 resource "aws_key_pair" "deployer" {
@@ -95,6 +95,13 @@ resource "aws_default_security_group" "securityServicesSG" {
     from_port = 0
     to_port = 0
     cidr_blocks = [format("%s/%s",data.http.ip_address.body,32)]
+  }
+
+  ingress {
+    protocol = -1
+    from_port = 0
+    to_port = 0
+    cidr_blocks = [var.juiceShopAppCIDR,var.juiceShopAPICIDR,var.securityServicesCIDR]
   }
 
   egress {
@@ -185,20 +192,24 @@ resource "aws_network_interface" "F5_BIGIP_AZ1ENI_MGMT" {
   }
 }
 
+/*
 resource "time_sleep" "F5_BIGIP_AZ1EIPdelay" {
   create_duration = "30s"
   depends_on = [
     aws_network_interface.F5_BIGIP_AZ1ENI_DATA
   ]
 }
+*/
 
 resource "aws_eip" "F5_BIGIP_AZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
   associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.private_ip
+/*
   depends_on = [
     time_sleep.F5_BIGIP_AZ1EIPdelay
   ]
+*/
   tags = {
     Name = "F5_BIGIP_AZ1EIP"
   }
@@ -245,20 +256,24 @@ resource "aws_network_interface" "F5_BIGIP_AZ2ENI_MGMT" {
   }
 }
 
+/*
 resource "time_sleep" "F5_BIGIP_AZ2EIPdelay" {
   create_duration = "30s"
   depends_on = [
     aws_network_interface.F5_BIGIP_AZ2ENI_DATA
   ]
 }
+*/
 
 resource "aws_eip" "F5_BIGIP_AZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.id
   associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.private_ip
+/*
   depends_on = [
     time_sleep.F5_BIGIP_AZ2EIPdelay
   ]
+*/
   tags = {
     Name = "F5_BIGIP_AZ2EIP"
   }
@@ -394,17 +409,10 @@ resource "aws_default_security_group" "juiceShopAppSG" {
   }
 
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    protocol = -1
+    from_port = 0
+    to_port = 0
+    cidr_blocks = [var.juiceShopAppCIDR]
   }
 
   ingress {
@@ -470,20 +478,24 @@ resource "aws_network_interface" "juiceShopAppAZ1ENI" {
   }
 }
 
+/*
 resource "time_sleep" "juiceShopAppAZ1EIPdelay" {
   create_duration = "30s"
   depends_on = [
     aws_network_interface.juiceShopAppAZ1ENI
   ]
 }
+*/
 
 resource "aws_eip" "juiceShopAppAZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAppAZ1ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAppAZ1ENI.private_ip
+/*
   depends_on = [
     time_sleep.juiceShopAppAZ1EIPdelay
   ]
+*/
   tags = {
     Name = "juiceShopAppAZ1EIP"
   }
@@ -532,20 +544,24 @@ resource "aws_network_interface" "juiceShopAppAZ2ENI" {
   }
 }
 
+/*
 resource "time_sleep" "juiceShopAppAZ2EIPdelay" {
   create_duration = "30s"
   depends_on = [
     aws_network_interface.juiceShopAppAZ2ENI
   ]
 }
+*/
 
 resource "aws_eip" "juiceShopAppAZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAppAZ2ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAppAZ2ENI.private_ip
+/*
   depends_on = [
     time_sleep.juiceShopAppAZ2EIPdelay
   ]
+*/
   tags = {
     Name = "juiceShopAppAZ2EIP"
   }
@@ -689,6 +705,9 @@ resource "aws_route_table" "juiceShopAppGWLBInboundRT" {
     cidr_block = var.juiceShopAppSubnetAZ2
     vpc_endpoint_id = aws_vpc_endpoint.juiceShopAppEndpointAZ2.id
   }
+  tags = {
+    Name = "juiceShopAppGWLBInboundRT"
+  }
 }
 
 resource "aws_route_table_association" "juiceShopAppGWLBInboundRT" {
@@ -702,6 +721,9 @@ resource "aws_route_table" "juiceShopAppGWLBOutboundRTAZ1" {
     cidr_block = "0.0.0.0/0"
     vpc_endpoint_id = aws_vpc_endpoint.juiceShopAppEndpointAZ1.id
   }
+  tags = {
+    Name = "juiceShopAppGWLBOutboundRTAZ1"
+  }
 }
 
 resource "aws_route_table_association" "juiceShopAppGWLBOutboundRTAZ1" {
@@ -714,6 +736,9 @@ resource "aws_route_table" "juiceShopAppGWLBOutboundRTAZ2" {
   route {
     cidr_block = "0.0.0.0/0"
     vpc_endpoint_id = aws_vpc_endpoint.juiceShopAppEndpointAZ2.id
+  }
+  tags = {
+    Name = "juiceShopAppGWLBOutboundRTAZ2"
   }
 }
 
@@ -750,17 +775,10 @@ resource "aws_default_security_group" "juiceShopAPISG" {
   }
 
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    protocol = -1
+    from_port = 0
+    to_port = 0
+    cidr_blocks = [var.juiceShopAPICIDR]
   }
 
   ingress {
@@ -826,17 +844,24 @@ resource "aws_network_interface" "juiceShopAPIAZ1ENI" {
   }
 }
 
+/*
 resource "time_sleep" "juiceShopAPIAZ1EIPdelay" {
   create_duration = "30s"
   depends_on = [
     aws_network_interface.juiceShopAPIAZ1ENI
   ]
 }
+*/
 
 resource "aws_eip" "juiceShopAPIAZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAPIAZ1ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAPIAZ1ENI.private_ip
+/*
+  depends_on = [
+    time_sleep.juiceShopAPIAZ1EIPdelay
+  ]
+*/
   tags = {
     Name = "juiceShopAPIAZ1EIP"
   }
@@ -884,21 +909,23 @@ resource "aws_network_interface" "juiceShopAPIAZ2ENI" {
     Name = "juiceShopAPIAZ2ENI"
   }
 }
-
+/*
 resource "time_sleep" "juiceShopAPIAZ2EIPdelay" {
   create_duration = "30s"
   depends_on = [
     aws_network_interface.juiceShopAPIAZ2ENI
   ]
 }
-
+*/
 resource "aws_eip" "juiceShopAPIAZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAPIAZ2ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAPIAZ2ENI.private_ip
+/*
   depends_on = [
     time_sleep.juiceShopAPIAZ2EIPdelay
   ]
+*/
   tags = {
     Name = "juiceShopAPIAZ2EIP"
   }
@@ -1042,6 +1069,9 @@ resource "aws_route_table" "juiceShopAPIGWLBInboundRT" {
     cidr_block = var.juiceShopAPISubnetAZ2
     vpc_endpoint_id = aws_vpc_endpoint.juiceShopAPIEndpointAZ2.id
   }
+  tags = {
+    Name = "juiceShopAPIGWLBInboundRT"
+  }
 }
 
 resource "aws_route_table_association" "juiceShopAPIGWLBInboundRT" {
@@ -1055,6 +1085,9 @@ resource "aws_route_table" "juiceShopAPIGWLBOutboundRTAZ1" {
     cidr_block = "0.0.0.0/0"
     vpc_endpoint_id = aws_vpc_endpoint.juiceShopAPIEndpointAZ1.id
   }
+  tags = {
+    Name = "juiceShopAPIGWLBOutboundRTAZ1"
+  }
 }
 
 resource "aws_route_table_association" "juiceShopAPIGWLBOutboundRTAZ1" {
@@ -1067,6 +1100,9 @@ resource "aws_route_table" "juiceShopAPIGWLBOutboundRTAZ2" {
   route {
     cidr_block = "0.0.0.0/0"
     vpc_endpoint_id = aws_vpc_endpoint.juiceShopAPIEndpointAZ2.id
+  }
+  tags = {
+    Name = "juiceShopAPIGWLBOutboundRTAZ2"
   }
 }
 

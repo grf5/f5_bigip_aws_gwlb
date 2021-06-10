@@ -1,6 +1,6 @@
 output "JuiceShopAZ1SSH" {
   description = "Juice Shop App AZ1 SSH:"
-  value = format("ssh://ubuntu@%s:22",aws_eip.juiceShopAppAZ1EIP.public_ip)
+  value = format("ssh ubuntu@%s -p 22",aws_eip.juiceShopAppAZ1EIP.public_ip)
   depends_on = [
     aws_eip.juiceShopAppAZ1EIP
   ]
@@ -8,7 +8,7 @@ output "JuiceShopAZ1SSH" {
 
 output "JuiceShopAZ2SSH" {
   description = "Juice Shop App AZ2 SSH:"
-  value = format("ssh://ubuntu@%s:22",aws_eip.juiceShopAppAZ2EIP.public_ip)
+  value = format("ssh ubuntu@%s -p 22 -i vpcs/%s",aws_eip.juiceShopAppAZ2EIP.public_ip,local_file.newkey_pem.filename)
   depends_on = [
     aws_eip.juiceShopAppAZ2EIP
   ]
@@ -16,7 +16,7 @@ output "JuiceShopAZ2SSH" {
 
 output "JuiceShopAPIAZ1SSH" {
   description = "Juice Shop API AZ1 SSH:"
-  value = format("ssh://ubuntu@%s:22",aws_eip.juiceShopAPIAZ1EIP.public_ip)
+  value = format("ssh ubuntu@%s -p 22 -i vpcs/%s",aws_eip.juiceShopAPIAZ1EIP.public_ip,local_file.newkey_pem.filename)
   depends_on = [
     aws_eip.juiceShopAPIAZ1EIP
   ]
@@ -24,7 +24,7 @@ output "JuiceShopAPIAZ1SSH" {
 
 output "JuiceShopAPIAZ2SSH" {
   description = "Juice Shop API AZ2 SSH:"
-  value = format("ssh://ubuntu@%s:22",aws_eip.juiceShopAPIAZ2EIP.public_ip)
+  value = format("ssh ubuntu@%s -p 22 -i vpcs/%s",aws_eip.juiceShopAPIAZ2EIP.public_ip,local_file.newkey_pem.filename)
   depends_on = [
     aws_eip.juiceShopAPIAZ2EIP
   ]

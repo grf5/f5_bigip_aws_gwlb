@@ -80,24 +80,24 @@ pre_onboard_enabled:
       - /usr/bin/setdb restjavad.useextramb true
       - /usr/bin/setdb setup.run false
       - /usr/bin/setdb provision.managementeth eth1
-      - /usr/bin/setdb provision.tmmcount 1            
 post_onboard_enabled:
   - name: licensing
     type: inline
     commands:
       - tmsh modify sys global-settings gui-setup disabled
-      - tmsh create net vlan dataplane interfaces add { 1.1 { untagged }}
+      - tmsh create net vlan dataplane interfaces add { 1.1 { untagged }} mtu 9001
       - tmsh create net route-domain dataplane id 1 vlans add { dataplane }
       - tmsh create net self inband-mgmt address `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1/`printf {{{ MGMT_IP }}} | cut -d "/" -f2` vlan dataplane allow-service all
-      - tmsh create net route dataplane-default network 0.0.0.0%1 gw {{{ MGMT_GATEWAY }}}%1 mtu 9198
-      - tmsh create net tunnels tunnel aws-gwlb local-address `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1 remote-address any%1 profile geneve
-      - tmsh modify net route-domain dataplane vlans add { aws-gwlb } 
+      - tmsh create net route dataplane-default network 0.0.0.0%1 gw {{{ MGMT_GATEWAY }}}%1
+      - tmsh create net tunnels tunnel geneve local-address `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1 remote-address any%1 profile geneve
+      - tmsh modify net route-domain dataplane vlans add { geneve } 
       - tmsh create ltm virtual health_check destination `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1:1 ip-protocol tcp mask 255.255.255.255 profiles add { http tcp } source 0.0.0.0%1/0 vlans-enabled vlans add { dataplane } 
-      - tmsh create net self aws-gwlb-tunnel address 10.131.0.1%1/24 vlan aws-gwlb allow-service all
+      - tmsh create net self geneve-tunnel address 10.131.0.1%1/24 vlan geneve allow-service all
       - tmsh create net arp fake_arp_entry ip-address 10.131.0.2%1 mac-address ff:ff:ff:ff:ff:ff
-      - tmsh create ltm node aws-gwlb-tunnel address 10.131.0.2%1 monitor none 
-      - tmsh create ltm pool aws-gwlb-tunnel members add { aws-gwlb-tunnel:0 } monitor none 
-      - tmsh create ltm virtual forwarding_vs destination 0.0.0.0%1:any ip-protocol any vlans-enabled vlans add { aws-gwlb } translate-address disabled source-port preserve-strict pool aws-gwlb-tunnel mask any
+      - tmsh create ltm node geneve-tunnel address 10.131.0.2%1 monitor none 
+      - tmsh create ltm pool geneve-tunnel members add { geneve-tunnel:0 } monitor none 
+      - tmsh create ltm virtual forwarding_vs destination 0.0.0.0%1:any ip-protocol any vlans-enabled vlans add { geneve } translate-address disabled source-port preserve-strict pool geneve-tunnel mask any
+      - tmsh modify sys db provision.tmmcount value 1
       - tmsh save /sys config
       - sed -i 's/1\.1/1.0/g' /config/bigip_base.conf
       - reboot
@@ -106,18 +106,6 @@ bigip_ready_enabled:
     type: inline
     commands:
       - tmsh install sys license registration-key ${bigip_license}
-EOF
-
-cat << "EOF" > /config/cloud/reset.sh
-tmsh delete ltm virtual all
-tmsh delete ltm pool all
-tmsh delete ltm node all
-tmsh delete net arp all
-tmsh delete net route all
-tmsh delete net self all
-tmsh delete net tunnels tunnel aws-gwlb
-tmsh delete net vlan all
-tmsh delete net route-domain all
 EOF
 
 ### runcmd:
@@ -129,6 +117,6 @@ done
 
 export F5_BIGIP_RUNTIME_INIT_LOG_LEVEL=silly
 
-bash /var/config/rest/downloads/f5-bigip-runtime-init-1.2.1-1.gz.run -- "--cloud aws"
+export F5_BIGIP_RUNTIME_INIT_LOG_LEVEL=silly && bash /var/config/rest/downloads/f5-bigip-runtime-init-1.2.1-1.gz.run -- "--cloud aws"
 
-f5-bigip-runtime-init --config-file /config/cloud/runtime-init-conf.yaml
+f5-bigip-runtime-init --config-file /config/cloud/runtime-init-conf.yaml --skip-telemetry
