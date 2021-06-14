@@ -3,6 +3,8 @@
 ## Overview
 This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE deployed in an AWS Gateway Load Balancer (GWLB) Configuration.
 
+BIG-IP licensing and configuration is performed via [f5-bigip-runtime-init](https://github.com/F5Networks/f5-bigip-runtime-init).
+
 ## Diagram
 
 ![GWLB Diagram](diagram.png)
@@ -38,6 +40,7 @@ This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE 
 ## Debugging
 
 Logs are sent to /var/log/cloud.
+
 If licensing fails, the initial configuration will not complete successfully. You can re-run the initial configuration using the following commands:
 
 ```
