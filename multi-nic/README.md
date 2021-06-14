@@ -11,7 +11,7 @@ BIG-IP licensing and configuration is performed via [f5-bigip-runtime-init](http
 
 ### Inventory:
 * EC2 Account
-    * BIG-IP 15.1.2.1 EHF AMI (required to deploy this plan; can use Marketlace images soon)    
+    * BIG-IP 15.1.2.1 EHF AMI (required to deploy this plan; can use Marketplace images soon)    
 * Security Services VPC
     * Internet Gateway (for mgmt reachability)
     * Security Group (Mgmt Reachability)
