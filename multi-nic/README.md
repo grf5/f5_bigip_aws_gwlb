@@ -5,6 +5,11 @@ This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE 
 
 BIG-IP licensing and configuration is performed via [f5-bigip-runtime-init](https://github.com/F5Networks/f5-bigip-runtime-init).
 
+## Device Access
+You can connect to the Ubuntu servers and BIG-IPs via SSH. The BIG-IPs are reachable via HTTPS as well. The default credentials for the BIG-IPs are **admin** / **f5c0nfig123!**. You'll need to use the generated SSH key to connect to the Juice Shop servers using the **ubuntu** username.
+
+**The security group is populated with your detected public IPv4 address by default. If the Terraform plan is executed from a different host, or you want to share your environment with another user, you will likely need to update the security group with the additional administrative public IPs. This plan does not include or deploy any IPv6 services.**
+
 ## Diagram
 
 ![GWLB Diagram](diagram.png)
