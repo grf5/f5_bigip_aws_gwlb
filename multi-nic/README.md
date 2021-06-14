@@ -50,7 +50,10 @@ BIG-IP licensing and configuration is performed via [f5-bigip-runtime-init](http
                 * Juice Shop Container (Docker)
                 * EIP for mgmt reachability
 
-*Security groups will automatically allow connections from the host where the Terraform plan was executed.*
+## Notes
+- Security groups will automatically allow connections from the host where the Terraform plan was executed.
+- Route tables will steer ingress traffic to the GWLB endpoint, and egress server traffic to the GWLB endpoint. The main route table steers inspected traffic destined for the Internet back to the igw as a default route.
+- GWLB GENEVE tunnel configuration is performed automatically.
 
 ## Usage
 1. Copy admin.auto.tfvars.example to admin.auto.tfvars and populate all variables with valid values.
