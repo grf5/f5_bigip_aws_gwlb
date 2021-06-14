@@ -1,6 +1,6 @@
 # F5 BIG-IP Terraform Plan for Amazon Web Services Gateway Load Balancer
 
-See the [README.MD](multi-nic/README.MD) file in the [multi-nic](multi-nic) directory. Single NIC instances are not yet supported.
+See the [README.MD](multi-nic/README.md) file in the [multi-nic](multi-nic) directory. Single NIC instances are not yet supported.
 
 ## Support
 This project offers no official support from F5 and is best-effort by the community.
