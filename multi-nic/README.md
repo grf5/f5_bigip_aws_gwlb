@@ -58,8 +58,9 @@ You can connect to the Ubuntu servers and BIG-IPs via SSH. The BIG-IPs are reach
 
 ## Notes
 - Security groups will automatically allow connections from the host where the Terraform plan was executed.
-- Route tables will steer ingress traffic to the GWLB endpoint, and egress server traffic to the GWLB endpoint. The main route table steers inspected traffic destined for the Internet back to the igw as a default route.
+- Route tables will steer ingress traffic to the GWLB endpoint, and egress server traffic to the GWLB endpoint. The main route table steers inspected traffic destined for the Internet back to the IGW as a default route.
 - GWLB GENEVE tunnel configuration is performed automatically.
+- The BIG-IP has a default forwarding virtual server, thus no actions are taken on traffic. The default behavior is that the BIG-IP acts as a virtual transparent forwarder.
 
 ## Usage
 1. Copy admin.auto.tfvars.example to admin.auto.tfvars and populate all variables with valid values.
