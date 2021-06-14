@@ -36,7 +36,14 @@ This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE 
 2. Execute the "./setup.sh" shell script to deploy.
 
 ## Debugging
-Logging 
+
+Logs are sent to /var/log/cloud.
+If licensing fails, the initial configuration will not complete successfully. You can re-run the initial configuration using the following commands:
+
+```
+cd /config/cloud
+bash manual_run.sh
+```
 
 ## Errors
 There is a known issue in the AWS provider where EIPs cannot be configured because the ENI is not ready yet. **To continue, simply run the ./setup.sh script again and the installation will continue.** If this is an issue for you, please "thumbs up" the issue I created: https://github.com/hashicorp/terraform-provider-aws/issues/19699
