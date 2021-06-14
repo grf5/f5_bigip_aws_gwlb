@@ -3,14 +3,33 @@
 ## Overview
 This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE deployed in an AWS Gateway Load Balancer (GWLB) Configuration.
 
+## Diagram
+
+![GWLB Diagram](diagram.png)
+
 ### Inventory:
 * AWS VPC
-** Security Services
-*** Availability Zone 1
-**** BIG-IP 15.1.2.1
-**** BIG-IP 15.1.2.1
-** Juice Shop Web App
-** Juice Shop Web API
+    * Security Services
+        * Availability Zone 1
+            * BIG-IP 15.1.2.1
+        * Availability Zone 2
+            * BIG-IP 15.1.2.1
+    * Juice Shop Web App
+        * Availability Zone 1
+            * Juice Shop App Server (Ubuntu)
+                * Juice Shop Container (Docker)
+        * Availability Zone 2
+            * Juice Shop App Server (Ubuntu)
+                * Juice Shop Container (Docker)
+    * Juice Shop Web API
+        * Availability Zone 1
+            * Juice Shop API Server (Ubuntu)
+                * Juice Shop Container (Docker)
+        * Availability Zone 2
+            * Juice Shop API Server (Ubuntu)
+                * Juice Shop Container (Docker)
+
+*Security groups will automatically allow connections from the host where the Terraform plan was executed.*
 
 ## Usage
 #. Copy admin.auto.tfvars.example to admin.auto.tfvars and populate all variables with valid values.
