@@ -192,15 +192,6 @@ resource "aws_network_interface" "F5_BIGIP_AZ1ENI_MGMT" {
   }
 }
 
-/*
-resource "time_sleep" "F5_BIGIP_AZ1EIPdelay" {
-  create_duration = "30s"
-  depends_on = [
-    aws_network_interface.F5_BIGIP_AZ1ENI_DATA
-  ]
-}
-*/
-
 resource "aws_eip" "F5_BIGIP_AZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
@@ -253,15 +244,6 @@ resource "aws_network_interface" "F5_BIGIP_AZ2ENI_MGMT" {
     Name = "F5_BIGIP_AZ2ENI"
   }
 }
-
-/*
-resource "time_sleep" "F5_BIGIP_AZ2EIPdelay" {
-  create_duration = "30s"
-  depends_on = [
-    aws_network_interface.F5_BIGIP_AZ2ENI_DATA
-  ]
-}
-*/
 
 resource "aws_eip" "F5_BIGIP_AZ2EIP" {
   vpc = true
@@ -353,28 +335,6 @@ resource "aws_vpc_endpoint_service" "securityServicesES" {
     Name = "${var.projectPrefix}-securityServicesES-${random_id.buildSuffix.hex}"
   }
 }
-
-/*
-resource "aws_vpc_endpoint" "secSvcsEndpointAZ1" {
-  service_name = aws_vpc_endpoint_service.securityServicesES.service_name
-  vpc_id = aws_vpc.securityServicesVPC.id
-  vpc_endpoint_type = aws_vpc_endpoint_service.securityServicesES.service_type
-  subnet_ids = [aws_subnet.securityServicesSubnetAZ1.id]
-  tags = {
-    Name = "${var.projectPrefix}-securityServicesES-${random_id.buildSuffix.hex}"
-  }
-}
-
-resource "aws_vpc_endpoint" "secSvcsEndpointAZ2" {
-  service_name = aws_vpc_endpoint_service.securityServicesES.service_name
-  vpc_id = aws_vpc.securityServicesVPC.id
-  vpc_endpoint_type = aws_vpc_endpoint_service.securityServicesES.service_type
-  subnet_ids = [aws_subnet.securityServicesSubnetAZ2.id]
-  tags = {
-    Name = "${var.projectPrefix}-securityServicesES-${random_id.buildSuffix.hex}"
-  }
-}
-*/
 
 ####################################################################
 ########################## Juice Shop App ##########################
@@ -474,15 +434,6 @@ resource "aws_network_interface" "juiceShopAppAZ1ENI" {
   }
 }
 
-/*
-resource "time_sleep" "juiceShopAppAZ1EIPdelay" {
-  create_duration = "30s"
-  depends_on = [
-    aws_network_interface.juiceShopAppAZ1ENI
-  ]
-}
-*/
-
 resource "aws_eip" "juiceShopAppAZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAppAZ1ENI.id
@@ -537,15 +488,6 @@ resource "aws_network_interface" "juiceShopAppAZ2ENI" {
     Name = "juiceShopAppAZ2ENI"
   }
 }
-
-/*
-resource "time_sleep" "juiceShopAppAZ2EIPdelay" {
-  create_duration = "30s"
-  depends_on = [
-    aws_network_interface.juiceShopAppAZ2ENI
-  ]
-}
-*/
 
 resource "aws_eip" "juiceShopAppAZ2EIP" {
   vpc = true
@@ -836,15 +778,6 @@ resource "aws_network_interface" "juiceShopAPIAZ1ENI" {
   }
 }
 
-/*
-resource "time_sleep" "juiceShopAPIAZ1EIPdelay" {
-  create_duration = "30s"
-  depends_on = [
-    aws_network_interface.juiceShopAPIAZ1ENI
-  ]
-}
-*/
-
 resource "aws_eip" "juiceShopAPIAZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAPIAZ1ENI.id
@@ -899,14 +832,7 @@ resource "aws_network_interface" "juiceShopAPIAZ2ENI" {
     Name = "juiceShopAPIAZ2ENI"
   }
 }
-/*
-resource "time_sleep" "juiceShopAPIAZ2EIPdelay" {
-  create_duration = "30s"
-  depends_on = [
-    aws_network_interface.juiceShopAPIAZ2ENI
-  ]
-}
-*/
+
 resource "aws_eip" "juiceShopAPIAZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAPIAZ2ENI.id
