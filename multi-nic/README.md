@@ -1,7 +1,16 @@
 # F5 BIG-IP Terraform Plan for Amazon Web Services Gateway Load Balancer
 
 ## Overview
-This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE deployed in an AWS Gateway Load Balancer (GWLB) Configuration
+This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE deployed in an AWS Gateway Load Balancer (GWLB) Configuration.
+
+### Inventory:
+* AWS VPC
+** Security Services
+*** Availability Zone 1
+**** BIG-IP 15.1.2.1
+**** BIG-IP 15.1.2.1
+** Juice Shop Web App
+** Juice Shop Web API
 
 ## Usage
 #. Copy admin.auto.tfvars.example to admin.auto.tfvars and populate all variables with valid values.
@@ -24,7 +33,10 @@ Error Message:
 ```
 
 ## Development
-Requires Terraform 0.15.5 and AWS provider 0.3.44 (as of June 2021)
+Requires:
+* Terraform 0.15.5
+* AWS provider 0.3.45 
+* HTTP 2.1.0
 
 ## Support
 This project offers no official support from F5 and is best-effort by the community.
