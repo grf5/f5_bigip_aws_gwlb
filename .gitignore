@@ -5,6 +5,7 @@
 
 # logs
 *.log
+**/*.log
 
 # Custom config files
 admin.auto.tfvars

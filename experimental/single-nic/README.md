@@ -1,5 +1,9 @@
 # F5 BIG-IP Terraform Plan for Amazon Web Services Gateway Load Balancer
 
+
+## WARNING
+**Do not use the single NIC plan for production/testing. This plan is used for internal F5 testing and is not advised for use at this time.**
+
 ## Overview
 This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE deployed in an AWS Gateway Load Balancer (GWLB) Configuration
 

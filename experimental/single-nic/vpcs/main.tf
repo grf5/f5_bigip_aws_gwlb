@@ -177,7 +177,7 @@ data "template_file" "bigip_runtime_init_AZ2" {
 ## AZ1 F5 BIG-IP Instance
 ##
 
-resource "aws_network_interface" "F5_BIGIP_AZ1ENI_DATA" {
+resource "aws_network_interface" "F5_BIGIP_AZ1ENI_SINGLE_NIC" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ1.id
   source_dest_check = false
   tags = {
@@ -185,26 +185,10 @@ resource "aws_network_interface" "F5_BIGIP_AZ1ENI_DATA" {
   }
 }
 
-resource "aws_network_interface" "F5_BIGIP_AZ1ENI_MGMT" {
-  subnet_id       = aws_subnet.securityServicesSubnetAZ1.id
-  tags = {
-    Name = "F5_BIGIP_AZ1ENI"
-  }
-}
-
-/*
-resource "time_sleep" "F5_BIGIP_AZ1EIPdelay" {
-  create_duration = "30s"
-  depends_on = [
-    aws_network_interface.F5_BIGIP_AZ1ENI_DATA
-  ]
-}
-*/
-
 resource "aws_eip" "F5_BIGIP_AZ1EIP" {
   vpc = true
-  network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
-  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.private_ip
+  network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_SINGLE_NIC.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_SINGLE_NIC.private_ip
 /*
   depends_on = [
     time_sleep.F5_BIGIP_AZ1EIPdelay
@@ -222,12 +206,8 @@ resource "aws_instance" "F5_BIGIP_AZ1" {
   key_name          = aws_key_pair.deployer.id
 	user_data = "${data.template_file.bigip_runtime_init_AZ1.rendered}"
   network_interface {
-    network_interface_id = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
+    network_interface_id = aws_network_interface.F5_BIGIP_AZ1ENI_SINGLE_NIC.id
     device_index = 0
-  }
-  network_interface {
-    network_interface_id = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.id
-    device_index = 1
   }
   depends_on = [
     aws_eip.F5_BIGIP_AZ1EIP
@@ -241,7 +221,7 @@ resource "aws_instance" "F5_BIGIP_AZ1" {
 ## AZ2 F5 BIG-IP Instance
 ##
 
-resource "aws_network_interface" "F5_BIGIP_AZ2ENI_DATA" {
+resource "aws_network_interface" "F5_BIGIP_AZ2ENI_SINGLE_NIC" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ2.id
   source_dest_check = false
   tags = {
@@ -249,26 +229,10 @@ resource "aws_network_interface" "F5_BIGIP_AZ2ENI_DATA" {
   }
 }
 
-resource "aws_network_interface" "F5_BIGIP_AZ2ENI_MGMT" {
-  subnet_id       = aws_subnet.securityServicesSubnetAZ2.id
-  tags = {
-    Name = "F5_BIGIP_AZ2ENI"
-  }
-}
-
-/*
-resource "time_sleep" "F5_BIGIP_AZ2EIPdelay" {
-  create_duration = "30s"
-  depends_on = [
-    aws_network_interface.F5_BIGIP_AZ2ENI_DATA
-  ]
-}
-*/
-
 resource "aws_eip" "F5_BIGIP_AZ2EIP" {
   vpc = true
-  network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.id
-  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.private_ip
+  network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_SINGLE_NIC.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_SINGLE_NIC.private_ip
 /*
   depends_on = [
     time_sleep.F5_BIGIP_AZ2EIPdelay
@@ -286,12 +250,8 @@ resource "aws_instance" "F5_BIGIP_AZ2" {
   key_name          = aws_key_pair.deployer.id
 	user_data = "${data.template_file.bigip_runtime_init_AZ2.rendered}"
   network_interface {
-    network_interface_id = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.id
+    network_interface_id = aws_network_interface.F5_BIGIP_AZ2ENI_SINGLE_NIC.id
     device_index = 0
-  }
-  network_interface {
-    network_interface_id = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.id
-    device_index = 1
   }
   depends_on = [
     aws_eip.F5_BIGIP_AZ2EIP
