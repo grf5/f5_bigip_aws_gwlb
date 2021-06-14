@@ -11,25 +11,44 @@ BIG-IP licensing and configuration is performed via [f5-bigip-runtime-init](http
 
 ### Inventory:
 * AWS VPC
+    * BIG-IP 15.1.2.1 EHF AMI (required to deploy this plan; can use Marketlace images soon)
     * Security Services
+        * Security Group (Mgmt Reachability)
+        * Main Route Table
         * Availability Zone 1
             * BIG-IP 15.1.2.1
         * Availability Zone 2
             * BIG-IP 15.1.2.1
     * Juice Shop Web App
+        * NLB w/ Juice Shop server targets
+        * Security Group (Mgmt and App Reachability)
+        * Main Route Table
+        * Ingress Route Table (attached to IGW)
         * Availability Zone 1
+            * Egress Route Table
             * Juice Shop App Server (Ubuntu)
                 * Juice Shop Container (Docker)
+                * EIP for mgmt reachability
         * Availability Zone 2
+            * Egress Route Table
             * Juice Shop App Server (Ubuntu)
                 * Juice Shop Container (Docker)
+                * EIP for mgmt reachability
     * Juice Shop Web API
+        * NLB w/ Juice Shop server targets
+        * Security Group (Mgmt and App Reachability)
+        * Main Route Table
+        * Ingress Route Table (attached to IGW)
         * Availability Zone 1
+            * Egress Route Table
             * Juice Shop API Server (Ubuntu)
                 * Juice Shop Container (Docker)
+                * EIP for mgmt reachability
         * Availability Zone 2
+            * Egress Route Table
             * Juice Shop API Server (Ubuntu)
                 * Juice Shop Container (Docker)
+                * EIP for mgmt reachability
 
 *Security groups will automatically allow connections from the host where the Terraform plan was executed.*
 
