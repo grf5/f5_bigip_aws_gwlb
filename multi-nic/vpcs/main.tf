@@ -205,11 +205,9 @@ resource "aws_eip" "F5_BIGIP_AZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
   associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.private_ip
-/*
   depends_on = [
-    time_sleep.F5_BIGIP_AZ1EIPdelay
+    aws_internet_gateway.securityServicesIGW
   ]
-*/
   tags = {
     Name = "F5_BIGIP_AZ1EIP"
   }
@@ -269,11 +267,9 @@ resource "aws_eip" "F5_BIGIP_AZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.id
   associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.private_ip
-/*
   depends_on = [
-    time_sleep.F5_BIGIP_AZ2EIPdelay
+    aws_internet_gateway.securityServicesIGW
   ]
-*/
   tags = {
     Name = "F5_BIGIP_AZ2EIP"
   }
@@ -491,11 +487,9 @@ resource "aws_eip" "juiceShopAppAZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAppAZ1ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAppAZ1ENI.private_ip
-/*
   depends_on = [
-    time_sleep.juiceShopAppAZ1EIPdelay
+    aws_internet_gateway.juiceShopAppIGW
   ]
-*/
   tags = {
     Name = "juiceShopAppAZ1EIP"
   }
@@ -557,11 +551,9 @@ resource "aws_eip" "juiceShopAppAZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAppAZ2ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAppAZ2ENI.private_ip
-/*
   depends_on = [
-    time_sleep.juiceShopAppAZ2EIPdelay
+    aws_internet_gateway.juiceShopAppIGW
   ]
-*/
   tags = {
     Name = "juiceShopAppAZ2EIP"
   }
@@ -857,11 +849,9 @@ resource "aws_eip" "juiceShopAPIAZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAPIAZ1ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAPIAZ1ENI.private_ip
-/*
   depends_on = [
-    time_sleep.juiceShopAPIAZ1EIPdelay
+    aws_internet_gateway.juiceShopAPIIGW
   ]
-*/
   tags = {
     Name = "juiceShopAPIAZ1EIP"
   }
@@ -921,11 +911,9 @@ resource "aws_eip" "juiceShopAPIAZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAPIAZ2ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAPIAZ2ENI.private_ip
-/*
   depends_on = [
-    time_sleep.juiceShopAPIAZ2EIPdelay
+    aws_internet_gateway.juiceShopAPIIGW
   ]
-*/
   tags = {
     Name = "juiceShopAPIAZ2EIP"
   }
