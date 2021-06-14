@@ -47,4 +47,4 @@ override.tf.json
 *tfplan*
 
 # Mac junk
-.DS_Store
+**/.DS_Store
