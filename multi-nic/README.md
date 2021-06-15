@@ -147,6 +147,34 @@ By default, the BIG-IP forwards all traffic using the **forwarding_vs** virtual 
 11. Assign the *WAF_HTTP_Policy_Assignment* iRule. 
 12. Click *Finished*.
 
+**OPTIONAL** - Create a HTTPS virtual server (requires that you supply and import SSL keys and create a client-SSL profile for each FQDN - see [K14620 on F5.com](https://support.f5.com/csp/article/K14620))
+
+1. *Local Traffic* -> *Virtual Servers* -> *Virtual Server List*.
+2. Click *Create*.
+3. Define the virtual server (remember to change the Configuration view drop-down from Basic to Advanced):
+    - Name: **HTTPS_WAF_Listener**
+    - Type: **Standard**
+    - Source Address: **0.0.0.0%1/0**
+    - Destination Address/Mask: **0.0.0.0%1/0**
+    - Service Port: **43 / HTTPS**
+    - HTTP Profile (Client): **http**
+    - SSL Profile (Client): *use your supplied SSL client profile*
+    - VLAN and Tunnel Traffic: **Enabled on...**
+    - VLANs and Tunnels: **geneve**
+    - Source Address Translation: **None**
+    - Address Translation: **Disabled**
+    - Port Translation: **Disabled**
+    - Default Pool: **geneve-tunnel**
+4. Click *Finished*.
+5. In the *Virtual Server List*, click on the **HTTP_WAF_Listener** virtual server name.
+6. Click *Security* in the menu bar at the top of the *Local Traffic ›› Virtual Servers : Virtual Server List ›› HTTP_WAF_Listener* pane. Select *Policies* from the drop-down.
+7. Change the drop-down for *Application Security Policy* to **Enabled...** and select the **TransparentDefaultPolicy** policy.
+8. Click *Update*.
+9. Click *Resources* in the menu bar at the top of the *Local Traffic ›› Virtual Servers : Virtual Server List ›› HTTP_WAF_Listener* pane.
+10. Click *Manage* above the *iRules* list.
+11. Assign the *WAF_HTTP_Policy_Assignment* iRule. 
+12. Click *Finished*.
+
 ## Debugging
 
 bigip-runtime-init logs are sent to /var/log/cloud.
