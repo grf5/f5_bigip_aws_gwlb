@@ -99,7 +99,7 @@ post_onboard_enabled:
       - tmsh create ltm virtual forwarding_vs destination 0.0.0.0%1:any ip-protocol any vlans-enabled vlans add { geneve } translate-address disabled source-port preserve-strict pool geneve-tunnel mask any
       - tmsh modify sys db provision.tmmcount value 1
       - tmsh save /sys config
-      - sed -i 's/interface 1\.1/interface 1.0/g' /config/bigip_base.conf
+      - sed -i 's/        1\.1 {/        1\.0 {/g' /config/bigip_base.conf
       - reboot
 bigip_ready_enabled:
   - name: aws_gwlb_configuration
