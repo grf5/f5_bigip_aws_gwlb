@@ -1,11 +1,12 @@
 # F5 BIG-IP Terraform Plan for Amazon Web Services Gateway Load Balancer
 
 ## Overview
-This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE deployed in an AWS Gateway Load Balancer (GWLB) Configuration.
 
+This Terraform plan deploys a proof-of-concept environment for the F5 BIG-IP VE deployed in an AWS Gateway Load Balancer (GWLB) Configuration.
 BIG-IP licensing and configuration is performed via [f5-bigip-runtime-init](https://github.com/F5Networks/f5-bigip-runtime-init).
 
 ## Device Access
+
 You can connect to the Ubuntu servers and BIG-IPs via SSH. The BIG-IPs are reachable via HTTPS as well. The default credentials for the BIG-IPs are **admin** / **f5c0nfig123!**. You'll need to use the generated SSH key to connect to the Juice Shop servers using the **ubuntu** username.
 
 **The security group is populated with your detected public IPv4 address by default. If the Terraform plan is executed from a different host, or you want to share your environment with another user, you will likely need to update the security group with the additional administrative public IPs. This plan does not include or deploy any IPv6 services.**
@@ -14,57 +15,60 @@ You can connect to the Ubuntu servers and BIG-IPs via SSH. The BIG-IPs are reach
 
 ![GWLB Diagram](diagram.png)
 
-### Inventory:
+### Inventory
+
 * EC2 Account
-    * BIG-IP 15.1.2.1 EHF AMI (required to deploy this plan; can use Marketplace images soon)
+  * BIG-IP 15.1.2.1 EHF AMI (required to deploy this plan; can use Marketplace images soon)
 * Security Services VPC
-    * Internet Gateway (for mgmt reachability)
-    * Security Group (Mgmt Reachability)
-    * Main Route Table
-    * Availability Zone 1
-        * BIG-IP 15.1.2.1
-    * Availability Zone 2
-        * BIG-IP 15.1.2.1
+* Internet Gateway (for mgmt reachability)
+  * Security Group (Mgmt Reachability)
+  * Main Route Table
+  * Availability Zone 1
+    * BIG-IP 15.1.2.1
+  * Availability Zone 2
+    * BIG-IP 15.1.2.1
 * Juice Shop Web App VPC
-    * NLB w/ Juice Shop server targets
-    * Security Group (Mgmt and App Reachability)
-    * Main Route Table
-    * Ingress Route Table (attached to IGW)
-    * Availability Zone 1
-        * Egress Route Table
-        * Juice Shop App Server (Ubuntu)
-            * Juice Shop Container (Docker)
-            * EIP for mgmt reachability
-    * Availability Zone 2
-        * Egress Route Table
-        * Juice Shop App Server (Ubuntu)
-            * Juice Shop Container (Docker)
-            * EIP for mgmt reachability
+  * NLB w/ Juice Shop server targets
+  * Security Group (Mgmt and App Reachability)
+  * Main Route Table
+  * Ingress Route Table (attached to IGW)
+  * Availability Zone 1
+    * Egress Route Table
+    * Juice Shop App Server (Ubuntu)
+      * Juice Shop Container (Docker)
+      * EIP for mgmt reachability
+  * Availability Zone 2
+    * Egress Route Table
+    * Juice Shop App Server (Ubuntu)
+      * Juice Shop Container (Docker)
+      * EIP for mgmt reachability
 * Juice Shop Web API VPC
-    * NLB w/ Juice Shop server targets
-    * Security Group (Mgmt and App Reachability)
-    * Main Route Table
-    * Ingress Route Table (attached to IGW)
-    * Availability Zone 1
-        * Egress Route Table
-        * Juice Shop API Server (Ubuntu)
-            * Juice Shop Container (Docker)
-            * EIP for mgmt reachability
-    * Availability Zone 2
-        * Egress Route Table
-        * Juice Shop API Server (Ubuntu)
-            * Juice Shop Container (Docker)
-            * EIP for mgmt reachability
+  * NLB w/ Juice Shop server targets
+  * Security Group (Mgmt and App Reachability)
+  * Main Route Table
+  * Ingress Route Table (attached to IGW)
+  * Availability Zone 1
+    * Egress Route Table
+    * Juice Shop API Server (Ubuntu)
+      * Juice Shop Container (Docker)
+      * EIP for mgmt reachability
+  * Availability Zone 2
+    * Egress Route Table
+    * Juice Shop API Server (Ubuntu)
+      * Juice Shop Container (Docker)
+      * EIP for mgmt reachability
 
 ## Notes
-- Security groups will automatically allow connections from the host where the Terraform plan was executed.
-- Route tables will steer ingress traffic to the GWLB endpoint, and egress server traffic to the GWLB endpoint. The main route table steers inspected traffic destined for the Internet back to the IGW as a default route.
-- GWLB GENEVE tunnel configuration is performed automatically.
-- The BIG-IP has a default forwarding virtual server, thus no actions are taken on traffic. The default behavior is that the BIG-IP acts as a virtual forwarder/router.
+
+* Security groups will automatically allow connections from the host where the Terraform plan was executed.
+* Route tables will steer ingress traffic to the GWLB endpoint, and egress server traffic to the GWLB endpoint. The main route table steers inspected traffic destined for the Internet back to the IGW as a default route.
+* GWLB GENEVE tunnel configuration is performed automatically.
+* The BIG-IP has a default forwarding virtual server, thus no actions are taken on traffic. The default behavior is that the BIG-IP acts as a virtual forwarder/router.
 
 ## Usage
 
 ### Deploying the Terraform plan
+
 1. Copy admin.auto.tfvars.example to admin.auto.tfvars and populate all variables with valid values.
 2. Execute the "./setup.sh" shell script to deploy.
 
@@ -85,9 +89,9 @@ First, we'll create a policy that for blocking attacks. Then we'll create a tran
 1. *Security* -> *Application Security* -> *Security Policies*.
 2. Click *Create*.
 3. Define the policy using the following parameters:
-    - Policy Name: **JuiceShopEnforced**
-    - Policy Template: **Comprehensive** (Choose OK if presented with the following warning: `Changing the policy template may change some of the settings below. Are you sure you want to continue?`)
-    - Policy Builder Learning Speed: **Fast**
+   * Policy Name: **JuiceShopEnforced**
+   * Policy Template: **Comprehensive** (Choose OK if presented with the following warning: `Changing the policy template may change some of the settings below. Are you sure you want to continue?`)
+   * Policy Builder Learning Speed: **Fast**
 4. Click *Save*.
 5. In the *Policies List* screen, click on the name of the policy that you've just created.
 6. In *General Settings* under *Learning and Blocking*, set the *Enforcement Readiness Period* from the default value of **7** days to **0** days.
@@ -96,9 +100,9 @@ First, we'll create a policy that for blocking attacks. Then we'll create a tran
 9. *Security* -> *Application Security* -> *Security Policies*.
 10. Click *Create*.
 11. Define the policy using the following parameters:
-    - Policy Name: **TransparentDefaultPolicy**
-    - Policy Template: **Passive Deployment Policy** (Choose OK if presented with the following warning: `Changing the policy template may change some of the settings below. Are you sure you want to continue?`)
-    - Enforcement Mode: **Transparent** (*Passive Mode* should be **unchecked**!)
+    * Policy Name: **TransparentDefaultPolicy**
+    * Policy Template: **Passive Deployment Policy** (Choose OK if presented with the following warning: `Changing the policy template may change some of the settings below. Are you sure you want to continue?`)
+    * Enforcement Mode: **Transparent** (*Passive Mode* should be **unchecked**!)
 12. Click *Save*.
 
 #### iRule Creation
@@ -107,31 +111,35 @@ First, we'll create a policy that for blocking attacks. Then we'll create a tran
 2. Click *Create*.
 3. Enter **WAF_HTTP_Policy_Assignment** as the name.
 4. Paste the following text into the iRule, replacing the FQDNs with those provided in the Terraform output:
-```
-when HTTP_REQUEST {
-    if { [HTTP::host] equals "waf-gwlb-juiceshopapinlb-c35f-22d2d4ce4493a161.elb.us-east-2.amazonaws.com" } {
-        ASM::enable /Common/JuiceShopEnforced
-    } elseif { [HTTP::host] equals "waf-gwlb-juiceshopappnlb-c35f-52ee3f33da958176.elb.us-east-2.amazonaws.com" } {
-        ASM::enable /Common/JuiceShopEnforced
-    }
-}
-```
+
+   ```tcl
+   when HTTP_REQUEST {
+     if { [HTTP::host] equals "waf-gwlb-juiceshopapinlb-c35f-22d2d4ce4493a161.elb.us-east-2.amazonaws.com" } {
+       ASM::enable /Common/JuiceShopEnforced
+     } elseif { [HTTP::host] equals "waf-gwlb-juiceshopappnlb-c35f-52ee3f33da958176.elb.us-east-2.amazonaws.com" } {
+       ASM::enable /Common/JuiceShopEnforced
+     }
+   }
+   ```
+
 5. Click *Finished*.
 
 **OPTIONAL** - Create SNI/HTTPS iRule if using HTTPS listener below
 
+```tcl
 when CLIENTSSL_CLIENTHELLO {
-    sharedvar SNI
-    if { [SSL::extensions exists -type 0] } {
-        binary scan [SSL::extensions -type 0] @9a* captured_sni
-        set SNI ${captured_sni}
-    }
-    if { $SNI equals "waf-gwlb-juiceShopAPINLB-c35f-22d2d4ce4493a161.elb.us-east-2.amazonaws.com" } {
-        ASM::activate /Common/JuiceShopEnforced
-    } elseif { $SNI equals "waf-gwlb-juiceShopAppNLB-c35f-52ee3f33da958176.elb.us-east-2.amazonaws.com" } {
-        ASM::activate /Common/JuiceShopEnforced
-    }
+  sharedvar SNI
+  if { [SSL::extensions exists -type 0] } {
+    binary scan [SSL::extensions -type 0] @9a* captured_sni
+    set SNI ${captured_sni}
+  }
+  if { $SNI equals "waf-gwlb-juiceShopAPINLB-c35f-22d2d4ce4493a161.elb.us-east-2.amazonaws.com" } {
+    ASM::activate /Common/JuiceShopEnforced
+  } elseif { $SNI equals "waf-gwlb-juiceShopAppNLB-c35f-52ee3f33da958176.elb.us-east-2.amazonaws.com" } {
+    ASM::activate /Common/JuiceShopEnforced
+  }
 }
+```
 
 #### Virtual Server Configuration
 
@@ -140,18 +148,18 @@ By default, the BIG-IP forwards all traffic using the **forwarding_vs** virtual 
 1. *Local Traffic* -> *Virtual Servers* -> *Virtual Server List*.
 2. Click *Create*.
 3. Define the virtual server (remember to change the Configuration view drop-down from Basic to Advanced):
-    - Name: **HTTP_WAF_Listener**
-    - Type: **Standard**
-    - Source Address: **0.0.0.0%1/0**
-    - Destination Address/Mask: **0.0.0.0%1/0**
-    - Service Port: **80 / HTTP**
-    - HTTP Profile (Client): **http**
-    - VLAN and Tunnel Traffic: **Enabled on...**
-    - VLANs and Tunnels: **geneve**
-    - Source Address Translation: **None**
-    - Address Translation: **Disabled**
-    - Port Translation: **Disabled**
-    - Default Pool: **geneve-tunnel**
+   * Name: **HTTP_WAF_Listener**
+   * Type: **Standard**
+   * Source Address: **0.0.0.0%1/0**
+   * Destination Address/Mask: **0.0.0.0%1/0**
+   * Service Port: **80 / HTTP**
+   * HTTP Profile (Client): **http**
+   * VLAN and Tunnel Traffic: **Enabled on...**
+   * VLANs and Tunnels: **geneve**
+   * Source Address Translation: **None**
+   * Address Translation: **Disabled**
+   * Port Translation: **Disabled**
+   * Default Pool: **geneve-tunnel**
 4. Click *Finished*.
 5. In the *Virtual Server List*, click on the **HTTP_WAF_Listener** virtual server name.
 6. Click *Security* in the menu bar at the top of the *Local Traffic ›› Virtual Servers : Virtual Server List ›› HTTP_WAF_Listener* pane. Select *Policies* from the drop-down.
@@ -159,7 +167,7 @@ By default, the BIG-IP forwards all traffic using the **forwarding_vs** virtual 
 8. Click *Update*.
 9. Click *Resources* in the menu bar at the top of the *Local Traffic ›› Virtual Servers : Virtual Server List ›› HTTP_WAF_Listener* pane.
 10. Click *Manage* above the *iRules* list.
-11. Assign the *WAF_HTTP_Policy_Assignment* iRule. 
+11. Assign the *WAF_HTTP_Policy_Assignment* iRule.
 12. Click *Finished*.
 
 **OPTIONAL** - Create a HTTPS virtual server (requires that you supply and import SSL keys and create a client-SSL profile for each FQDN - see [K14620 on F5.com](https://support.f5.com/csp/article/K14620))
@@ -167,19 +175,19 @@ By default, the BIG-IP forwards all traffic using the **forwarding_vs** virtual 
 1. *Local Traffic* -> *Virtual Servers* -> *Virtual Server List*.
 2. Click *Create*.
 3. Define the virtual server (remember to change the Configuration view drop-down from Basic to Advanced):
-    - Name: **HTTPS_WAF_Listener**
-    - Type: **Standard**
-    - Source Address: **0.0.0.0%1/0**
-    - Destination Address/Mask: **0.0.0.0%1/0**
-    - Service Port: **43 / HTTPS**
-    - HTTP Profile (Client): **http**
-    - SSL Profile (Client): *use your supplied SSL client profile*
-    - VLAN and Tunnel Traffic: **Enabled on...**
-    - VLANs and Tunnels: **geneve**
-    - Source Address Translation: **None**
-    - Address Translation: **Disabled**
-    - Port Translation: **Disabled**
-    - Default Pool: **geneve-tunnel**
+   * Name: **HTTPS_WAF_Listener**
+   * Type: **Standard**
+   * Source Address: **0.0.0.0%1/0**
+   * Destination Address/Mask: **0.0.0.0%1/0**
+   * Service Port: **43 / HTTPS**
+   * HTTP Profile (Client): **http**
+   * SSL Profile (Client): *use your supplied SSL client profile*
+   * VLAN and Tunnel Traffic: **Enabled on...**
+   * VLANs and Tunnels: **geneve**
+   * Source Address Translation: **None**
+   * Address Translation: **Disabled**
+   * Port Translation: **Disabled**
+   * Default Pool: **geneve-tunnel**
 4. Click *Finished*.
 5. In the *Virtual Server List*, click on the **HTTP_WAF_Listener** virtual server name.
 6. Click *Security* in the menu bar at the top of the *Local Traffic ›› Virtual Servers : Virtual Server List ›› HTTP_WAF_Listener* pane. Select *Policies* from the drop-down.
@@ -187,7 +195,7 @@ By default, the BIG-IP forwards all traffic using the **forwarding_vs** virtual 
 8. Click *Update*.
 9. Click *Resources* in the menu bar at the top of the *Local Traffic ›› Virtual Servers : Virtual Server List ›› HTTP_WAF_Listener* pane.
 10. Click *Manage* above the *iRules* list.
-11. Assign the *WAF_HTTP_Policy_Assignment* iRule. 
+11. Assign the *WAF_HTTP_Policy_Assignment* iRule.
 12. Click *Finished*.
 
 ## Debugging
@@ -196,16 +204,18 @@ bigip-runtime-init logs are sent to /var/log/cloud.
 
 If licensing fails, the initial configuration will not complete successfully. You can re-run the initial configuration using the following commands:
 
-```
+```bash
 cd /config/cloud
 bash manual_run.sh
 ```
 
 ## Errors
-There is a known issue in the AWS provider where EIPs cannot be configured because the ENI is not ready yet. **To continue, simply run the ./setup.sh script again and the installation will continue.** If this is an issue for you, please "thumbs up" the issue I created: https://github.com/hashicorp/terraform-provider-aws/issues/19699
+
+There is a known issue in the AWS provider where EIPs cannot be configured because the ENI is not ready yet. **To continue, simply run the ./setup.sh script again and the installation will continue.** If this is an issue for you, please "thumbs up" [the issue I created.](https://github.com/hashicorp/terraform-provider-aws/issues/19699)
 
 Error Message:
-```
+
+```text
 ╷
 │ Error: Failure associating EIP: IncorrectInstanceState: The pending-instance-creation instance to which 'eni-0ee36cd9d3c25cd44' is attached is not in a valid state for this operation
 │       status code: 400, request id: 55e6ac47-2e3a-4c60-8e48-bb756f822ba0
@@ -218,24 +228,31 @@ Error Message:
 ```
 
 ## Development
+
 Requires:
+
 * Terraform 0.15.5
-* AWS provider 0.3.45 
+* AWS provider 0.3.45
 * HTTP 2.1.0
 
 ## Support
+
 This project offers no official support from F5 and is best-effort by the community.
 
 ## Community Code of Conduct
+
 Please refer to the [F5 DevCentral Community Code of Conduct](code_of_conduct.md).
 
 ## License
+
 [Apache License 2.0](LICENSE)
 
 ## Copyright
+
 Copyright 2014-2021 F5 Networks Inc.
 
 ### F5 Networks Contributor License Agreement
+
 Before you start contributing to any project sponsored by F5 Networks, Inc. (F5) on GitHub, you will need to sign a Contributor License Agreement (CLA).
 
 If you are signing as an individual, we recommend that you talk to your employer (if applicable) before signing the CLA since some employment agreements may have restrictions on your contributions to other projects.
