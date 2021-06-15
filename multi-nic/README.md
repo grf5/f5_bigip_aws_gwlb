@@ -60,15 +60,96 @@ You can connect to the Ubuntu servers and BIG-IPs via SSH. The BIG-IPs are reach
 - Security groups will automatically allow connections from the host where the Terraform plan was executed.
 - Route tables will steer ingress traffic to the GWLB endpoint, and egress server traffic to the GWLB endpoint. The main route table steers inspected traffic destined for the Internet back to the IGW as a default route.
 - GWLB GENEVE tunnel configuration is performed automatically.
-- The BIG-IP has a default forwarding virtual server, thus no actions are taken on traffic. The default behavior is that the BIG-IP acts as a virtual transparent forwarder.
+- The BIG-IP has a default forwarding virtual server, thus no actions are taken on traffic. The default behavior is that the BIG-IP acts as a virtual forwarder/router.
 
 ## Usage
+
+### Deploying the Terraform plan
 1. Copy admin.auto.tfvars.example to admin.auto.tfvars and populate all variables with valid values.
 2. Execute the "./setup.sh" shell script to deploy.
 
+### Post-deployment BIG-IP Configuration
+
+After the Terraform plan is deployed, several manual configuration steps are required for WAF services. However, traffic will flow through the BIG-IP using GWLB as a default forwarding virtual server was created during the environment stand up.
+
+#### WAF Provisioning
+
+Enable the ASM WAF module before performing any configuration.
+
+1. *System* -> *Resource Provisioning* -> *Application Security (ASM)* _> *Nominal* (causes reboot/restart).
+
+#### WAF Policy Creation
+
+First, we'll create a policy that for blocking attacks. Then we'll create a transparent policy that will act as a default policy for FQDNs not configured with a specific policy.
+
+1. *Security* -> *Application Security* -> *Security Policies*.
+2. Click *Create*.
+3. Define the policy using the following parameters:
+    - Policy Name: **JuiceShopEnforced**
+    - Policy Template: **Comprehensive** (Choose OK if presented with the following warning: `Changing the policy template may change some of the settings below. Are you sure you want to continue?`)
+    - Policy Builder Learning Speed: **Fast**
+4. Click *Save*.
+5. In the *Policies List* screen, click on the name of the policy that you've just created.
+6. In *General Settings* under *Learning and Blocking*, set the *Enforcement Readiness Period* from the default value of **7** days to **0** days.
+7. Click *Save*.
+8. Click *Apply Policy*.
+9. *Security* -> *Application Security* -> *Security Policies*.
+10. Click *Create*.
+11. Define the policy using the following parameters:
+    - Policy Name: **TransparentDefaultPolicy**
+    - Policy Template: **Passive Deployment Policy** (Choose OK if presented with the following warning: `Changing the policy template may change some of the settings below. Are you sure you want to continue?`)
+    - Enforcement Mode: **Transparent** (*Passive Mode* should be **unchecked**!)
+12. Click *Save*.
+
+#### iRule Creation
+
+1. *Local Traffic* -> *iRules* -> *iRule List*.
+2. Click *Create*.
+3. Enter **WAF_HTTP_Policy_Assignment** as the name.
+4. Paste the following text into the iRule, replacing the FQDNs with those provided in the Terraform output:
+```
+when HTTP_REQUEST {
+    if { [HTTP::host] equals "waf-gwlb-juiceshopapinlb-c35f-22d2d4ce4493a161.elb.us-east-2.amazonaws.com" } {
+        ASM::enable /Common/JuiceShopEnforced
+    } elseif { [HTTP::host] equals "waf-gwlb-juiceshopappnlb-c35f-52ee3f33da958176.elb.us-east-2.amazonaws.com" } {
+        ASM::enable /Common/JuiceShopEnforced
+    }
+}
+```
+5. Click *Finished*.
+
+#### Virtual Server Configuration
+
+By default, the BIG-IP forwards all traffic using the **forwarding_vs** virtual server. We'll create specific servers to HTTP traffic.
+
+1. *Local Traffic* -> *Virtual Servers* -> *Virtual Server List*.
+2. Click *Create*.
+3. Define the virtual server (remember to change the Configuration view drop-down from Basic to Advanced):
+    - Name: **HTTP_WAF_Listener**
+    - Type: **Standard**
+    - Source Address: **0.0.0.0%1/0**
+    - Destination Address/Mask: **0.0.0.0%1/0**
+    - Service Port: **80 / HTTP**
+    - HTTP Profile (Client): **http**
+    - VLAN and Tunnel Traffic: **Enabled on...**
+    - VLANs and Tunnels: **geneve**
+    - Source Address Translation: **None**
+    - Address Translation: **Disabled**
+    - Port Translation: **Disabled**
+    - Default Pool: **geneve-tunnel**
+4. Click *Finished*.
+5. In the *Virtual Server List*, click on the **HTTP_WAF_Listener** virtual server name.
+6. Click *Security* in the menu bar at the top of the *Local Traffic ›› Virtual Servers : Virtual Server List ›› HTTP_WAF_Listener* pane. Select *Policies* from the drop-down.
+7. Change the drop-down for *Application Security Policy* to **Enabled...** and select the **TransparentDefaultPolicy** policy.
+8. Click *Update*.
+9. Click *Resources* in the menu bar at the top of the *Local Traffic ›› Virtual Servers : Virtual Server List ›› HTTP_WAF_Listener* pane.
+10. Click *Manage* above the *iRules* list.
+11. Assign the *WAF_HTTP_Policy_Assignment* iRule. 
+12. Click *Finished*.
+
 ## Debugging
 
-Logs are sent to /var/log/cloud.
+bigip-runtime-init logs are sent to /var/log/cloud.
 
 If licensing fails, the initial configuration will not complete successfully. You can re-run the initial configuration using the following commands:
 
