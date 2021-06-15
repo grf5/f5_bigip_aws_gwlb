@@ -118,6 +118,21 @@ when HTTP_REQUEST {
 ```
 5. Click *Finished*.
 
+**OPTIONAL** - Create SNI/HTTPS iRule if using HTTPS listener below
+
+when CLIENTSSL_CLIENTHELLO {
+    sharedvar SNI
+    if { [SSL::extensions exists -type 0] } {
+        binary scan [SSL::extensions -type 0] @9a* captured_sni
+        set SNI ${captured_sni}
+    }
+    if { $SNI equals "waf-gwlb-juiceShopAPINLB-c35f-22d2d4ce4493a161.elb.us-east-2.amazonaws.com" } {
+        ASM::activate /Common/JuiceShopEnforced
+    } elseif { $SNI equals "waf-gwlb-juiceShopAppNLB-c35f-52ee3f33da958176.elb.us-east-2.amazonaws.com" } {
+        ASM::activate /Common/JuiceShopEnforced
+    }
+}
+
 #### Virtual Server Configuration
 
 By default, the BIG-IP forwards all traffic using the **forwarding_vs** virtual server. We'll create specific servers to HTTP traffic.
