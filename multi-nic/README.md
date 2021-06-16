@@ -140,6 +140,10 @@ when CLIENTSSL_CLIENTHELLO {
 }
 ```
 
+#### Client SSL Profile
+
+**OPTIONAL** If inspecting 443 traffic with the HTTPS_WAF_Listener virtual server, you'll need to create a client-ssl profile that specifies the cert, key and keychain for the FQDN in your environment. You can attach multiple 
+
 #### Virtual Server Configuration
 
 By default, the BIG-IP forwards all traffic using the **forwarding_vs** virtual server. We'll create specific servers to HTTP traffic.
