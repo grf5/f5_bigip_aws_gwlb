@@ -98,6 +98,7 @@ post_onboard_enabled:
       - tmsh create ltm pool geneve-tunnel members add { geneve-tunnel:0 } monitor none 
       - tmsh create ltm virtual forwarding_vs destination 0.0.0.0%1:any ip-protocol any vlans-enabled vlans add { geneve } translate-address disabled source-port preserve-strict pool geneve-tunnel mask any
       - tmsh modify sys db provision.tmmcount value 1
+      - tmsh modify sys provision asm level nominal
       - tmsh save /sys config
       - sed -i 's/        1\.1 {/        1\.0 {/g' /config/bigip_base.conf
       - reboot
