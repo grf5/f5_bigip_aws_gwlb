@@ -24,6 +24,12 @@ variable "awsAz2" {
   type        = string
   default     = null
 }
+variable "bigipAdminPassword" {
+  description = "BIG-IP Admin Password (set on first boot)"
+  default = "f5c0nfig123!"
+  type = string
+  sensitive = true
+}
 variable "bigipLicenseAZ1" {
   description = "BIG-IP License for AZ1 instance"
   type = string
