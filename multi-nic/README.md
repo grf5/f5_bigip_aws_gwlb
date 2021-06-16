@@ -142,7 +142,7 @@ when CLIENTSSL_CLIENTHELLO {
 
 #### Client SSL Profile
 
-**OPTIONAL** If inspecting 443 traffic with the HTTPS_WAF_Listener virtual server, you'll need to create a client-ssl profile that specifies the cert, key and keychain for the FQDN in your environment. You can attach multiple 
+**OPTIONAL** If inspecting 443 traffic with the HTTPS_WAF_Listener virtual server, you'll need to create a client-ssl profile that specifies the cert, key and keychain for the FQDN in your environment. You can attach multiple profiles to the listener, but you'll have to specify one to be the default.
 
 #### Virtual Server Configuration
 

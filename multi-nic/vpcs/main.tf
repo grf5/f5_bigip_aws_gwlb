@@ -483,7 +483,7 @@ resource "aws_instance" "juiceShopAppAZ1" {
 ##
 
 resource "aws_network_interface" "juiceShopAppAZ2ENI" {
-  subnet_id       = aws_subnet.juiceShopAppSubnetAZ2.id
+  subnet_id = aws_subnet.juiceShopAppSubnetAZ2.id
   tags = {
     Name = "juiceShopAppAZ2ENI"
   }
