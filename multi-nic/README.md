@@ -108,9 +108,9 @@ First, we'll create a policy that for blocking attacks. Then we'll create a tran
 
    ```tcl
    when HTTP_REQUEST {
-     if { [HTTP::host] equals "waf-gwlb-juiceshopapinlb-c35f-22d2d4ce4493a161.elb.us-east-2.amazonaws.com" } {
+     if { [HTTP::host] equals "waf-gwlb-juiceShopAPINLB-d3e0-1c3c833b3afef5b5.elb.us-east-2.amazonaws.com" } {
        ASM::enable /Common/JuiceShopEnforced
-     } elseif { [HTTP::host] equals "waf-gwlb-juiceshopappnlb-c35f-52ee3f33da958176.elb.us-east-2.amazonaws.com" } {
+     } elseif { [HTTP::host] equals "waf-gwlb-juiceShopAppNLB-d3e0-ebd13c151f7c6cb5.elb.us-east-2.amazonaws.com" } {
        ASM::enable /Common/JuiceShopEnforced
      }
    }
@@ -120,6 +120,11 @@ First, we'll create a policy that for blocking attacks. Then we'll create a tran
 
 **OPTIONAL** - Create SNI/HTTPS iRule if using HTTPS listener below
 
+1. *Local Traffic* -> *iRules* -> *iRule List*.
+2. Click *Create*.
+3. Enter **WAF_HTTPS_Policy_Assignment** as the name.
+4. Paste the following text into the iRule, replacing the FQDNs with those provided in the Terraform output:
+
 ```tcl
 when CLIENTSSL_CLIENTHELLO {
   sharedvar SNI
@@ -128,9 +133,9 @@ when CLIENTSSL_CLIENTHELLO {
     set SNI ${captured_sni}
   }
   if { $SNI equals "waf-gwlb-juiceShopAPINLB-c35f-22d2d4ce4493a161.elb.us-east-2.amazonaws.com" } {
-    ASM::activate /Common/JuiceShopEnforced
+    ASM::enable /Common/JuiceShopEnforced
   } elseif { $SNI equals "waf-gwlb-juiceShopAppNLB-c35f-52ee3f33da958176.elb.us-east-2.amazonaws.com" } {
-    ASM::activate /Common/JuiceShopEnforced
+    ASM::enable /Common/JuiceShopEnforced
   }
 }
 ```
