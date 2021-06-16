@@ -100,13 +100,16 @@ extension_services:
         label: BIG-IP declaration for declarative onboarding
         Common:
           class: Tenant
+          admin:
+            class: User
+            password: ${bigipAdminPassword}
           provision:
             ltm: nominal
             asm: nominal
-        dbVars:
-          class: DbVariables
-          configsync.allowmanagement: enable
-          provision.tmmcount: 1
+          dbVars:
+            class: DbVariables
+            configsync.allowmanagement: enable
+            provision.tmmcount: 1
 post_onboard_enabled:
   - name: licensing
     type: inline

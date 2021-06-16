@@ -76,12 +76,6 @@ You can connect to the Ubuntu servers and BIG-IPs via SSH. The BIG-IPs are reach
 
 After the Terraform plan is deployed, several manual configuration steps are required for WAF services. However, traffic will flow through the BIG-IP using GWLB as a default forwarding virtual server was created during the environment stand up.
 
-#### WAF Provisioning
-
-Enable the ASM WAF module before performing any configuration.
-
-1. *System* -> *Resource Provisioning* -> *Application Security (ASM)* _> *Nominal* (causes reboot/restart).
-
 #### WAF Policy Creation
 
 First, we'll create a policy that for blocking attacks. Then we'll create a transparent policy that will act as a default policy for FQDNs not configured with a specific policy.
