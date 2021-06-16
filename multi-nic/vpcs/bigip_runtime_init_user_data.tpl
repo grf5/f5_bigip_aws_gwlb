@@ -80,6 +80,29 @@ pre_onboard_enabled:
       - /usr/bin/setdb restjavad.useextramb true
       - /usr/bin/setdb setup.run false
       - /usr/bin/setdb provision.managementeth eth1
+bigip_ready_enabled:
+  - name: aws_gwlb_configuration
+    type: inline
+    commands:
+      - tmsh install sys license registration-key ${bigip_license}
+extension_packages:
+  install_operations:
+    - extensionType: do
+      extensionVersion: 1.20.0
+extension_services:
+  service_operations:
+    - extensionType: do
+      type: inline
+      value:
+        schemaVersion: 1.0.0
+        class: Device
+        async: true
+        label: BIG-IP declaration for declarative onboarding
+        Common:
+          class: Tenant
+          provision:
+            ltm: nominal
+            asm: nominal
 post_onboard_enabled:
   - name: licensing
     type: inline
@@ -98,15 +121,9 @@ post_onboard_enabled:
       - tmsh create ltm pool geneve-tunnel members add { geneve-tunnel:0 } monitor none 
       - tmsh create ltm virtual forwarding_vs destination 0.0.0.0%1:any ip-protocol any vlans-enabled vlans add { geneve } translate-address disabled source-port preserve-strict pool geneve-tunnel mask any
       - tmsh modify sys db provision.tmmcount value 1
-      - tmsh modify sys provision asm level nominal
       - tmsh save /sys config
       - sed -i 's/        1\.1 {/        1\.0 {/g' /config/bigip_base.conf
       - reboot
-bigip_ready_enabled:
-  - name: aws_gwlb_configuration
-    type: inline
-    commands:
-      - tmsh install sys license registration-key ${bigip_license}
 EOF
 
 ### runcmd:
