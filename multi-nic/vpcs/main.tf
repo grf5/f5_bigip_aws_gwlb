@@ -300,8 +300,8 @@ resource "aws_lb_target_group" "securityServicesTG" {
   port = 6081
   protocol = "GENEVE"
   health_check {
-    port = 1
-    protocol = "TCP"
+    port = 443
+    protocol = "HTTPS"
     healthy_threshold = 2
     unhealthy_threshold = 2
     timeout = 4

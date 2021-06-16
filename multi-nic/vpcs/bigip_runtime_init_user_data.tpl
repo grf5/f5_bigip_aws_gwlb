@@ -78,6 +78,13 @@ pre_onboard_enabled:
     commands:
       - /usr/bin/setdb provision.extramb 500
       - /usr/bin/setdb restjavad.useextramb true
+      - /usr/bin/setdb setup.run false
+      - /usr/bin/setdb provision.managementeth eth1
+bigip_ready_enabled:
+  - name: aws_gwlb_configuration
+    type: inline
+    commands:
+      - tmsh install sys license registration-key ${bigip_license}
 extension_packages:
   install_operations:
     - extensionType: do
@@ -87,7 +94,7 @@ extension_services:
     - extensionType: do
       type: inline
       value:
-        schemaVersion: 1.21.0
+        schemaVersion: 1.0.0
         class: Device
         async: true
         label: BIG-IP declaration for declarative onboarding
@@ -96,17 +103,12 @@ extension_services:
           provision:
             ltm: nominal
             asm: nominal
-          dbVars:
-            class: DbVariables
-            configsync.allowmanagement: enable
-            provision.tmmcount: 1
-            provision.managementeth: eth1
-            setup.run: falsee
-          licensing:
-            class: License
-            regKey: ${bigip_license}
+        dbVars:
+          class: DbVariables
+          configsync.allowmanagement: enable
+          provision.tmmcount: 1
 post_onboard_enabled:
-  - name: base_config
+  - name: licensing
     type: inline
     commands:
       - tmsh modify sys global-settings gui-setup disabled
