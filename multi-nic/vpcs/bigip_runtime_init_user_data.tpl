@@ -115,7 +115,7 @@ post_onboard_enabled:
   - name: manual_tmsh_configuration
     type: inline
     commands:
-      - tmsh modify net user admin password ${bigipAdminPassword}
+      - tmsh modify auth user admin password ${bigipAdminPassword}
       - tmsh create net vlan dataplane interfaces add { 1.1 { untagged }} mtu 9001
       - tmsh create net route-domain dataplane id 1 vlans add { dataplane }
       - tmsh create net self inband-mgmt address `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1/`printf {{{ MGMT_IP }}} | cut -d "/" -f2` vlan dataplane allow-service all
