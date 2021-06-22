@@ -120,12 +120,15 @@ post_onboard_enabled:
 EOF
 
 ### runcmd:
-# Download
-
+# Download the f5-bigip-runtime-init package
+# 30 attempts, 5 second timeout and 10 second pause between attempts
 for i in {1..30}; do
     curl -fv --retry 1 --connect-timeout 5 -L https://cdn.f5.com/product/cloudsolutions/f5-bigip-runtime-init/v1.2.1/dist/f5-bigip-runtime-init-1.2.1-1.gz.run -o /var/config/rest/downloads/f5-bigip-runtime-init-1.2.1-1.gz.run && break || sleep 10
 done
-
-export F5_BIGIP_RUNTIME_INIT_LOG_LEVEL=silly && bash /var/config/rest/downloads/f5-bigip-runtime-init-1.2.1-1.gz.run -- "--cloud aws"
-
-f5-bigip-runtime-init --config-file /config/cloud/runtime-init-conf.yaml --skip-telemetry
+# Set logging level (least to most)
+# error, warn, info, debug, silly
+export F5_BIGIP_RUNTIME_INIT_LOG_LEVEL=silly
+# Execute the installer
+bash /var/config/rest/downloads/f5-bigip-runtime-init-1.2.1-1.gz.run -- "--cloud aws"
+# Runtime Init execution on configuration file created above
+f5-bigip-runtime-init --config-file /config/cloud/runtime-init-conf.yaml
