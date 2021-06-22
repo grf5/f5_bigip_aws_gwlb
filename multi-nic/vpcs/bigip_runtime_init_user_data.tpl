@@ -3,17 +3,6 @@
 # Create the logging directory
 mkdir -p /var/log/cloud
 
-# Define the logging destination
-LOG_FILE=/var/log/cloud/startup-script.log
-
-npipe=$(mktemp)
-trap "rm -f $npipe" EXIT
-mknod $npipe p
-tee <$npipe -a $LOG_FILE /dev/ttyS0 &
-exec 1>&-
-exec 1>$npipe
-exec 2>&1
-
 # Make the config directory
 mkdir -p /config/cloud
 
@@ -91,6 +80,11 @@ post_onboard_enabled:
   - name: manual_tmsh_configuration
     type: inline
     commands:
+      - echo MGMT_IP: {{{ MGMT_IP }}}
+      - echo MGMT_SUBNET: {{{ MGMT_SUBNET }}}
+      - echo MGMT_CIDR_MASK: {{{ MGMT_CIDR_MASK }}}
+      - echo MGMT_GATEWAY: {{{ MGMT_GATEWAY }}}
+      - echo MGMT_MASK: {{{ MGMT_MASK }}}
       - source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready
       - tmsh modify sys provision ltm level nominal
       - source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready
