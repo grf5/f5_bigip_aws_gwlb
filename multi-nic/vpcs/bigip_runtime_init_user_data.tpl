@@ -78,33 +78,25 @@ pre_onboard_enabled:
     commands:
       - /usr/bin/setdb provision.extramb 500
       - /usr/bin/setdb restjavad.useextramb true
+bigip_ready_enabled:
+  - name: licensing
+    type: inline
+    commands:
+      - tmsh install sys license registration-key ${bigip_license}
 extension_packages:
   install_operations:
     - extensionType: do
       extensionVersion: 1.20.0
-extension_services:
-  service_operations:
-  - extensionType: do
-    type: inline
-    value:
-      schemaVersion: 1.20.0
-      class: Device
-      label: Declarative Onboarding
-      Common:
-        class: Tenant
-        licensing:
-          class: License
-          licenseType: regKey
-          regKey: ${bigip_license}
-          overwrite: true
-        provision:
-          class: Provision
-          ltm: nominal
-          asm: nominal
+# We're not using DO currently because static ARP entries and tunnel local-address/remote-address is not supported
+# as of 22 Jun 2021 (DO v1.20.0)
 post_onboard_enabled:
   - name: manual_tmsh_configuration
     type: inline
     commands:
+      - source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready
+      - tmsh modify sys provision ltm level nominal
+      - source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready
+      - tmsh modify sys provision asm level nominal
       - source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready
       - tmsh modify auth user admin password ${bigipAdminPassword}
       - tmsh create net vlan dataplane interfaces add { 1.1 { untagged }} mtu 9001
@@ -119,8 +111,9 @@ post_onboard_enabled:
       - tmsh create ltm node geneve-tunnel address 10.131.0.2%1 monitor none 
       - tmsh create ltm pool geneve-tunnel members add { geneve-tunnel:0 } monitor none 
       - tmsh create ltm virtual forwarding_vs destination 0.0.0.0%1:any ip-protocol any vlans-enabled vlans add { geneve } translate-address disabled source-port preserve-strict pool geneve-tunnel mask any
-      - /usr/bin/setdb provision.tmmcount 1
-      - /usr/bin/setdb provision.managementeth eth1
+      - tmsh modify sys db provision.tmmcount value 1
+      - tmsh modify sys db configsync.allowmanagement value enable
+      - tmsh modify sys global-settings gui-setup disabled
       - tmsh save /sys config
       - sed -i 's/        1\.1 {/        1\.0 {/g' /config/bigip_base.conf
       - reboot
@@ -132,8 +125,6 @@ EOF
 for i in {1..30}; do
     curl -fv --retry 1 --connect-timeout 5 -L https://cdn.f5.com/product/cloudsolutions/f5-bigip-runtime-init/v1.2.1/dist/f5-bigip-runtime-init-1.2.1-1.gz.run -o /var/config/rest/downloads/f5-bigip-runtime-init-1.2.1-1.gz.run && break || sleep 10
 done
-
-export F5_BIGIP_RUNTIME_INIT_LOG_LEVEL=silly
 
 export F5_BIGIP_RUNTIME_INIT_LOG_LEVEL=silly && bash /var/config/rest/downloads/f5-bigip-runtime-init-1.2.1-1.gz.run -- "--cloud aws"
 
