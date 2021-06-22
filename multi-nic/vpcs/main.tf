@@ -162,14 +162,16 @@ data "aws_ami" "f5BigIP_GWLB_AMI" {
 data "template_file" "bigip_runtime_init_AZ1" {
   template = "${file("${path.module}/bigip_runtime_init_user_data.tpl")}"
   vars = {
-    bigip_license = "${var.bigipLicenseAZ1}"
+    bigip_license = "${var.bigipLicenseAZ1}",
+    bigipAdminPassword = "${var.bigipAdminPassword}"
   }
 }
 
 data "template_file" "bigip_runtime_init_AZ2" {
   template = "${file("${path.module}/bigip_runtime_init_user_data.tpl")}"
   vars = {
-    bigip_license = "${var.bigipLicenseAZ2}"
+    bigip_license = "${var.bigipLicenseAZ2}",
+    bigipAdminPassword = "${var.bigipAdminPassword}"
   }
 }
 
@@ -196,6 +198,7 @@ resource "aws_eip" "F5_BIGIP_AZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
   associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.private_ip
+  # The IGW needs to exist before the EIP can be created
   depends_on = [
     aws_internet_gateway.securityServicesIGW
   ]
@@ -218,6 +221,7 @@ resource "aws_instance" "F5_BIGIP_AZ1" {
     network_interface_id = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.id
     device_index = 1
   }
+  # Let's ensure an EIP is provisioned so licensing and bigip-runtime-init runs successfully
   depends_on = [
     aws_eip.F5_BIGIP_AZ1EIP
   ]
@@ -249,6 +253,7 @@ resource "aws_eip" "F5_BIGIP_AZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.id
   associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.private_ip
+  # The IGW needs to exist before the EIP can be created
   depends_on = [
     aws_internet_gateway.securityServicesIGW
   ]
@@ -271,6 +276,7 @@ resource "aws_instance" "F5_BIGIP_AZ2" {
     network_interface_id = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.id
     device_index = 1
   }
+  # Let's ensure an EIP is provisioned so licensing and bigip-runtime-init runs successfully
   depends_on = [
     aws_eip.F5_BIGIP_AZ2EIP
   ]
@@ -438,6 +444,7 @@ resource "aws_eip" "juiceShopAppAZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAppAZ1ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAppAZ1ENI.private_ip
+  # The IGW needs to exist before the EIP can be created
   depends_on = [
     aws_internet_gateway.juiceShopAppIGW
   ]
@@ -470,6 +477,7 @@ resource "aws_instance" "juiceShopAppAZ1" {
     network_interface_id = aws_network_interface.juiceShopAppAZ1ENI.id
     device_index = 0
   }
+  # Let's ensure an EIP is provisioned so user-data can run successfully
   depends_on = [
     aws_eip.juiceShopAppAZ1EIP
   ]
@@ -493,6 +501,7 @@ resource "aws_eip" "juiceShopAppAZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAppAZ2ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAppAZ2ENI.private_ip
+  # The IGW needs to exist before the EIP can be created
   depends_on = [
     aws_internet_gateway.juiceShopAppIGW
   ]
@@ -525,6 +534,7 @@ resource "aws_instance" "juiceShopAppAZ2" {
     network_interface_id = aws_network_interface.juiceShopAppAZ2ENI.id
     device_index = 0
   }
+  # Let's ensure an EIP is provisioned so user-data can run successfully
   depends_on = [
     aws_eip.juiceShopAppAZ2EIP
   ]
@@ -782,6 +792,7 @@ resource "aws_eip" "juiceShopAPIAZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAPIAZ1ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAPIAZ1ENI.private_ip
+  # The IGW needs to exist before the EIP can be created
   depends_on = [
     aws_internet_gateway.juiceShopAPIIGW
   ]
@@ -814,6 +825,7 @@ resource "aws_instance" "juiceShopAPIAZ1" {
     network_interface_id = aws_network_interface.juiceShopAPIAZ1ENI.id
     device_index = 0
   }
+  # Let's ensure an EIP is provisioned so user-data can run successfully
   depends_on = [
     aws_eip.juiceShopAPIAZ1EIP
   ]
@@ -837,6 +849,7 @@ resource "aws_eip" "juiceShopAPIAZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAPIAZ2ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAPIAZ2ENI.private_ip
+  # The IGW needs to exist before the EIP can be created
   depends_on = [
     aws_internet_gateway.juiceShopAPIIGW
   ]
@@ -869,6 +882,7 @@ resource "aws_instance" "juiceShopAPIAZ2" {
     network_interface_id = aws_network_interface.juiceShopAPIAZ2ENI.id
     device_index = 0
   }
+  # Let's ensure an EIP is provisioned so user-data can run successfully
   depends_on = [
     aws_eip.juiceShopAPIAZ2EIP
   ]
