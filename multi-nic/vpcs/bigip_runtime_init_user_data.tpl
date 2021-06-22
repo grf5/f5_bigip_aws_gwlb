@@ -19,7 +19,7 @@ mkdir -p /config/cloud
 
 cat << "EOF" > /config/cloud/manual_run.sh
 #!/bin/bash
-f5-bigip-runtime-init --config-file /config/cloud/runtime-init-conf.yaml
+f5-bigip-runtime-init --config-file /config/cloud/runtime-init-conf.yaml --skip-telemetry
 EOF
 
 cat << "EOF" > /config/cloud/runtime-init-conf.yaml
@@ -78,43 +78,34 @@ pre_onboard_enabled:
     commands:
       - /usr/bin/setdb provision.extramb 500
       - /usr/bin/setdb restjavad.useextramb true
-      - /usr/bin/setdb setup.run false
-      - /usr/bin/setdb provision.managementeth eth1
-      - /usr/bin/setdb provision.tmmcount 1
-bigip_ready_enabled:
-  - name: aws_gwlb_configuration
-    type: inline
-    commands:
-      - tmsh install sys license registration-key ${bigip_license}
 extension_packages:
   install_operations:
     - extensionType: do
       extensionVersion: 1.20.0
 extension_services:
   service_operations:
-    - extensionType: do
-      type: inline
-      value:
-        schemaVersion: 1.0.0
-        class: Device
-        async: true
-        label: BIG-IP declaration for declarative onboarding
-        Common:
-          class: Tenant
-          provision:
-            ltm: nominal
-            asm: nominal
-          dbVars:
-            class: DbVariables
-            provision.extramb: 500
-            restjavad.useextramb: true
-            provision.managementeth: eth1
-            provision.tmmcount: 1
-            configsync.allowmanagement: enable            
+  - extensionType: do
+    type: inline
+    value:
+      schemaVersion: 1.20.0
+      class: Device
+      label: Declarative Onboarding
+      Common:
+        class: Tenant
+        licensing:
+          class: License
+          licenseType: regKey
+          regKey: ${bigip_license}
+          overwrite: true
+        provision:
+          class: Provision
+          ltm: nominal
+          asm: nominal
 post_onboard_enabled:
   - name: manual_tmsh_configuration
     type: inline
     commands:
+      - source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready
       - tmsh modify auth user admin password ${bigipAdminPassword}
       - tmsh create net vlan dataplane interfaces add { 1.1 { untagged }} mtu 9001
       - tmsh create net route-domain dataplane id 1 vlans add { dataplane }
@@ -128,6 +119,8 @@ post_onboard_enabled:
       - tmsh create ltm node geneve-tunnel address 10.131.0.2%1 monitor none 
       - tmsh create ltm pool geneve-tunnel members add { geneve-tunnel:0 } monitor none 
       - tmsh create ltm virtual forwarding_vs destination 0.0.0.0%1:any ip-protocol any vlans-enabled vlans add { geneve } translate-address disabled source-port preserve-strict pool geneve-tunnel mask any
+      - /usr/bin/setdb provision.tmmcount 1
+      - /usr/bin/setdb provision.managementeth eth1
       - tmsh save /sys config
       - sed -i 's/        1\.1 {/        1\.0 {/g' /config/bigip_base.conf
       - reboot
