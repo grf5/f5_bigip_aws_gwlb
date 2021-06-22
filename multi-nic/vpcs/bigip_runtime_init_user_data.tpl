@@ -80,6 +80,7 @@ pre_onboard_enabled:
       - /usr/bin/setdb restjavad.useextramb true
       - /usr/bin/setdb setup.run false
       - /usr/bin/setdb provision.managementeth eth1
+      - /usr/bin/setdb provision.tmmcount 1
 bigip_ready_enabled:
   - name: aws_gwlb_configuration
     type: inline
@@ -100,20 +101,21 @@ extension_services:
         label: BIG-IP declaration for declarative onboarding
         Common:
           class: Tenant
-          admin:
-            class: User
-            password: ${bigipAdminPassword}
           provision:
             ltm: nominal
             asm: nominal
           dbVars:
             class: DbVariables
-            configsync.allowmanagement: enable
+            provision.extramb: 500
+            restjavad.useextramb: true
+            provision.managementeth: eth1
             provision.tmmcount: 1
+            configsync.allowmanagement: enable            
 post_onboard_enabled:
-  - name: licensing
+  - name: manual_tmsh_configuration
     type: inline
     commands:
+      - tmsh modify net user admin password ${bigipAdminPassword}
       - tmsh create net vlan dataplane interfaces add { 1.1 { untagged }} mtu 9001
       - tmsh create net route-domain dataplane id 1 vlans add { dataplane }
       - tmsh create net self inband-mgmt address `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1/`printf {{{ MGMT_IP }}} | cut -d "/" -f2` vlan dataplane allow-service all
