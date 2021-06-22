@@ -31,12 +31,6 @@ EOF
 cat << "EOF" > /config/cloud/runtime-init-conf.yaml
 ---
 runtime_parameters:
-  - name: HOST_NAME
-    type: metadata
-    metadataProvider:
-      environment: aws
-      type: compute
-      field: hostname
   - name: MGMT_IP
     type: metadata
     metadataProvider: 
