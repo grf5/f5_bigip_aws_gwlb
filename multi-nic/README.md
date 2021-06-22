@@ -205,11 +205,10 @@ By default, the BIG-IP forwards all traffic using the **forwarding_vs** virtual 
 
 bigip-runtime-init logs are sent to /var/log/cloud.
 
-If licensing fails, the initial configuration will not complete successfully. You can re-run the initial configuration using the following commands:
+If licensing fails, the initial configuration will not complete successfully. You can re-run the runtime init script  using the following command:
 
 ```bash
-cd /config/cloud
-bash manual_run.sh
+/config/cloud/manual_run.sh
 ```
 
 ## Errors
