@@ -77,14 +77,17 @@ extension_packages:
 # as of 22 Jun 2021 (DO v1.20.0) and mixing DO with TMSH commands in post_onboard_enabled have conflicted in testing.
 # Once DO supports these items, that will be the preferred configuration mechanism.
 post_onboard_enabled:
-  - name: manual_tmsh_configuration
+  - name: display_variables
     type: inline
     commands:
       - echo MGMT_IP: {{{ MGMT_IP }}}
       - echo MGMT_SUBNET: {{{ MGMT_SUBNET }}}
       - echo MGMT_CIDR_MASK: {{{ MGMT_CIDR_MASK }}}
       - echo MGMT_GATEWAY: {{{ MGMT_GATEWAY }}}
-      - echo MGMT_MASK: {{{ MGMT_MASK }}}
+      - echo MGMT_MASK: {{{ MGMT_MASK }}}      
+  - name: manual_tmsh_configuration
+    type: inline
+    commands:
       - source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready
       - tmsh modify sys provision ltm level nominal
       - source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready
