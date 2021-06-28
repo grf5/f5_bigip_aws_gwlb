@@ -183,14 +183,14 @@ resource "aws_network_interface" "F5_BIGIP_AZ1ENI_DATA" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ1.id
   source_dest_check = false
   tags = {
-    Name = "F5_BIGIP_AZ1ENI"
+    Name = "F5_BIGIP_AZ1ENI_DATA"
   }
 }
 
 resource "aws_network_interface" "F5_BIGIP_AZ1ENI_MGMT" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ1.id
   tags = {
-    Name = "F5_BIGIP_AZ1ENI"
+    Name = "F5_BIGIP_AZ1ENI_MGMT"
   }
 }
 
@@ -238,14 +238,14 @@ resource "aws_network_interface" "F5_BIGIP_AZ2ENI_DATA" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ2.id
   source_dest_check = false
   tags = {
-    Name = "F5_BIGIP_AZ2ENI"
+    Name = "F5_BIGIP_AZ2ENI_DATA"
   }
 }
 
 resource "aws_network_interface" "F5_BIGIP_AZ2ENI_MGMT" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ2.id
   tags = {
-    Name = "F5_BIGIP_AZ2ENI"
+    Name = "F5_BIGIP_AZ2ENI_MGMT"
   }
 }
 
