@@ -137,6 +137,42 @@ resource "aws_internet_gateway" "securityServicesIGW" {
   }
 }
 
+resource "aws_eip" "securityServicesNGWEIPAZ1" {
+  vpc = true
+  tags = {
+    Name = "securityServicesNGWEIPAZ1"
+  }
+}
+
+resource "aws_eip" "securityServicesNGWEIPAZ2" {
+  vpc = true
+  tags = {
+    Name = "securityServicesNGWEIPAZ2"
+  }
+}
+
+resource "aws_nat_gateway" "securityServicesNGWAZ1" {
+  allocation_id =aws_eip.securityServicesNGWEIPAZ1.id
+  subnet_id = aws_subnet.securityServicesSubnetAZ1.id
+  tags = {
+    Name = "securityServicesNGWAZ1"
+  }
+  depends_on = [
+    aws_internet_gateway.securityServicesIGW
+  ]
+}
+
+resource "aws_nat_gateway" "securityServicesNGWAZ2" {
+  allocation_id =aws_eip.securityServicesNGWEIPAZ2.id
+  subnet_id = aws_subnet.securityServicesSubnetAZ2.id 
+  tags = {
+    Name = "securityServicesNGWAZ2"
+  }
+  depends_on = [
+    aws_internet_gateway.securityServicesIGW
+  ]
+}
+
 resource "aws_default_route_table" "securityServicesMainRT" {
   default_route_table_id = aws_vpc.securityServicesVPC.default_route_table_id
 
@@ -196,8 +232,8 @@ resource "aws_network_interface" "F5_BIGIP_AZ1ENI_MGMT" {
 
 resource "aws_eip" "F5_BIGIP_AZ1EIP" {
   vpc = true
-  network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
-  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.private_ip
+  network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.private_ip
   # The IGW needs to exist before the EIP can be created
   depends_on = [
     aws_internet_gateway.securityServicesIGW
@@ -251,8 +287,8 @@ resource "aws_network_interface" "F5_BIGIP_AZ2ENI_MGMT" {
 
 resource "aws_eip" "F5_BIGIP_AZ2EIP" {
   vpc = true
-  network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.id
-  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.private_ip
+  network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.private_ip
   # The IGW needs to exist before the EIP can be created
   depends_on = [
     aws_internet_gateway.securityServicesIGW
