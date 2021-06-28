@@ -37,6 +37,7 @@ override.tf.json
 *_override.tf.json
 *.lock.hcl
 **/*.lock.hcl
+**/*.hcl
 
 # Include override files you do wish to add to version control using negated pattern
 #
