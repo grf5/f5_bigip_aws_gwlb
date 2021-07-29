@@ -42,12 +42,12 @@ output "JuiceShopAPIURL" {
 
 output "BIG-IP_AZ1_Mgmt_URL" {
   description = "URL for managing the BIG-IP in AZ1"
-  value = format("https://%s/",aws_eip.F5_BIGIP_AZ1EIP.public_ip)
+  value = format("https://%s/",aws_eip.F5_BIGIP_AZ1EIP_MGMT.public_ip)
 }
 
 output "BIG-IP_AZ2_Mgmt_URL" {
   description = "URL for managing the BIG-IP in AZ2"
-  value = format("https://%s/",aws_eip.F5_BIGIP_AZ2EIP.public_ip)
+  value = format("https://%s/",aws_eip.F5_BIGIP_AZ2EIP_MGMT.public_ip)
 }
 
 output "hostKeyPEM" {

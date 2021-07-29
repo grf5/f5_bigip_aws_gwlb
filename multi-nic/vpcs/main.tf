@@ -182,18 +182,31 @@ data "template_file" "bigip_runtime_init_AZ2" {
 resource "aws_network_interface" "F5_BIGIP_AZ1ENI_DATA" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ1.id
   tags = {
-    Name = "F5_BIGIP_AZ1ENI"
+    Name = "F5_BIGIP_AZ1ENI_DATA"
   }
 }
 
 resource "aws_network_interface" "F5_BIGIP_AZ1ENI_MGMT" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ1.id
   tags = {
-    Name = "F5_BIGIP_AZ1ENI"
+    Name = "F5_BIGIP_AZ1ENI_MGMT"
   }
 }
 
-resource "aws_eip" "F5_BIGIP_AZ1EIP" {
+resource "aws_eip" "F5_BIGIP_AZ1EIP_MGMT" {
+  vpc = true
+  network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.private_ip
+  # The IGW needs to exist before the EIP can be created
+  depends_on = [
+    aws_internet_gateway.securityServicesIGW
+  ]
+  tags = {
+    Name = "F5_BIGIP_AZ1EIP_MGMT"
+  }
+}
+
+resource "aws_eip" "F5_BIGIP_AZ1EIP_DATA" {
   vpc = true
   network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
   associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.private_ip
@@ -202,7 +215,7 @@ resource "aws_eip" "F5_BIGIP_AZ1EIP" {
     aws_internet_gateway.securityServicesIGW
   ]
   tags = {
-    Name = "F5_BIGIP_AZ1EIP"
+    Name = "F5_BIGIP_AZ1EIP_DATA"
   }
 }
 
@@ -222,7 +235,7 @@ resource "aws_instance" "F5_BIGIP_AZ1" {
   }
   # Let's ensure an EIP is provisioned so licensing and bigip-runtime-init runs successfully
   depends_on = [
-    aws_eip.F5_BIGIP_AZ1EIP
+    aws_eip.F5_BIGIP_AZ1EIP_DATA
   ]
   tags = {
     Name = "${var.projectPrefix}-F5_BIGIP_AZ1-${random_id.buildSuffix.hex}"
@@ -236,18 +249,31 @@ resource "aws_instance" "F5_BIGIP_AZ1" {
 resource "aws_network_interface" "F5_BIGIP_AZ2ENI_DATA" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ2.id
   tags = {
-    Name = "F5_BIGIP_AZ2ENI"
+    Name = "F5_BIGIP_AZ2ENI_DATA"
   }
 }
 
 resource "aws_network_interface" "F5_BIGIP_AZ2ENI_MGMT" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ2.id
   tags = {
-    Name = "F5_BIGIP_AZ2ENI"
+    Name = "F5_BIGIP_AZ2ENI_MGMT"
   }
 }
 
-resource "aws_eip" "F5_BIGIP_AZ2EIP" {
+resource "aws_eip" "F5_BIGIP_AZ2EIP_MGMT" {
+  vpc = true
+  network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.private_ip
+  # The IGW needs to exist before the EIP can be created
+  depends_on = [
+    aws_internet_gateway.securityServicesIGW
+  ]
+  tags = {
+    Name = "F5_BIGIP_AZ2EIP_MGMT"
+  }
+}
+
+resource "aws_eip" "F5_BIGIP_AZ2EIP_DATA" {
   vpc = true
   network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.id
   associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.private_ip
@@ -256,10 +282,9 @@ resource "aws_eip" "F5_BIGIP_AZ2EIP" {
     aws_internet_gateway.securityServicesIGW
   ]
   tags = {
-    Name = "F5_BIGIP_AZ2EIP"
+    Name = "F5_BIGIP_AZ2EIP_DATA"
   }
 }
-
 resource "aws_instance" "F5_BIGIP_AZ2" {
   ami               = data.aws_ami.f5BigIP_GWLB_AMI.id
   instance_type     = "c5.xlarge"
@@ -276,7 +301,7 @@ resource "aws_instance" "F5_BIGIP_AZ2" {
   }
   # Let's ensure an EIP is provisioned so licensing and bigip-runtime-init runs successfully
   depends_on = [
-    aws_eip.F5_BIGIP_AZ2EIP
+    aws_eip.F5_BIGIP_AZ2EIP_DATA
   ]
   tags = {
     Name = "${var.projectPrefix}-F5_BIGIP_AZ2-${random_id.buildSuffix.hex}"
