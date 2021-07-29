@@ -181,7 +181,6 @@ data "template_file" "bigip_runtime_init_AZ2" {
 
 resource "aws_network_interface" "F5_BIGIP_AZ1ENI_DATA" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ1.id
-  source_dest_check = false
   tags = {
     Name = "F5_BIGIP_AZ1ENI"
   }
@@ -236,7 +235,6 @@ resource "aws_instance" "F5_BIGIP_AZ1" {
 
 resource "aws_network_interface" "F5_BIGIP_AZ2ENI_DATA" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ2.id
-  source_dest_check = false
   tags = {
     Name = "F5_BIGIP_AZ2ENI"
   }
