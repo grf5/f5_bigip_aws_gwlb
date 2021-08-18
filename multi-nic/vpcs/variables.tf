@@ -24,6 +24,18 @@ variable "awsAz2" {
   type        = string
   default     = null
 }
+variable "bigipLicenseType" {
+  type = string
+  description = "license type BYOL or PAYG"
+  default = "PAYG"
+}
+variable "bigip_ami_mapping" {
+  description = "mapping AMIs for PAYG and BYOL"
+  default = {
+    "BYOL" = "BYOL-All Modules 2Boot Loc"
+    "PAYG" = "PAYG-Best 10Gbps"
+  }
+}
 variable "bigipAdminPassword" {
   description = "BIG-IP Admin Password (set on first boot)"
   default = "f5c0nfig123!"

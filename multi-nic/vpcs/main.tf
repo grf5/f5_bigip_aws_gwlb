@@ -153,12 +153,24 @@ resource "aws_default_route_table" "securityServicesMainRT" {
 ## BIG-IP AMI/Onboarding Config
 ##
 
-data "aws_ami" "f5BigIP_GWLB_AMI" {
-  most_recent      = true
-  name_regex       = "BIG-IP.*GWLB.*"
-  owners           = ["self","065972273535"]
+variable "bigip_version" {
+  type = string
+  description = "the base TMOS version to use - most recent version will be used"
+  default =  "16.1"
 }
-
+data "aws_ami" "f5BigIP_GWLB_AMI" {
+  most_recent = true
+  name_regex = ".*${lookup(var.bigip_ami_mapping, var.bigipLicenseType)}.*"
+  filter {
+    name = "name"
+    values = ["F5 BIGIP-${var.bigip_version}*"]
+  }
+  filter {
+    name = "virtualization-type"
+    values = ["hvm"]
+  }
+  owners = ["679593333241"]
+}
 data "template_file" "bigip_runtime_init_AZ1" {
   template = "${file("${path.module}/bigip_runtime_init_user_data.tpl")}"
   vars = {
@@ -329,7 +341,7 @@ resource "aws_lb_target_group" "securityServicesTG" {
   port = 6081
   protocol = "GENEVE"
   health_check {
-    port = 443
+    port = 65530
     protocol = "HTTPS"
     healthy_threshold = 2
     unhealthy_threshold = 2

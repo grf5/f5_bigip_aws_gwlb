@@ -89,11 +89,12 @@ post_onboard_enabled:
       - tmsh modify sys ntp servers add { 0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org 3.pool.ntp.org }
       - tmsh create net vlan dataplane interfaces add { 1.1 { untagged }} mtu 9001
       - tmsh create net route-domain dataplane id 1 vlans add { dataplane }
-      - tmsh create net self inband-mgmt address `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1/`printf {{{ MGMT_IP }}} | cut -d "/" -f2` vlan dataplane allow-service all
+      - tmsh create net self inband-mgmt address `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1/`printf {{{ MGMT_IP }}} | cut -d "/" -f2` vlan dataplane allow-service all rules add { aws_gwlb_health_check }
       - tmsh create net route dataplane-default network 0.0.0.0%1 gw {{{ MGMT_GATEWAY }}}%1
       - tmsh create net tunnels tunnel geneve local-address `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1 remote-address any%1 profile geneve
       - tmsh modify net route-domain dataplane vlans add { geneve } 
-      - tmsh create ltm virtual health_check destination `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1:1 ip-protocol tcp mask 255.255.255.255 profiles add { http tcp } source 0.0.0.0%1/0 vlans-enabled vlans add { dataplane } 
+      - curl -sku admin:${bigipAdminPassword} -H 'Content-type: application/json' -X POST https://127.0.0.1/mgmt/tm/ltm/rule -d '{"name":"aws_gwlb_health_check","apiAnonymous":"when HTTP_REQUEST {\n    HTTP::respond 200 OK\n}\n}"}'
+      - tmsh create ltm virtual health_check destination `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1:65530 ip-protocol tcp mask 255.255.255.255 profiles add { http tcp } source 0.0.0.0%1/0 vlans-enabled vlans add { dataplane } 
       - tmsh create net self geneve-tunnel address 10.131.0.1%1/24 vlan geneve allow-service all
       - tmsh create net arp fake_arp_entry ip-address 10.131.0.2%1 mac-address ff:ff:ff:ff:ff:ff
       - tmsh create ltm node geneve-tunnel address 10.131.0.2%1 monitor none 
