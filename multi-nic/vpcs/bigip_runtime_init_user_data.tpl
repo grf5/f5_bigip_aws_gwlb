@@ -68,7 +68,7 @@ bigip_ready_enabled:
   - name: licensing
     type: inline
     commands:
-      - tmsh install sys license registration-key ${bigipLicense}
+      - if [ "${bigipLicenseType}" -eq "BYOL" ]; then tmsh install sys license registration-key ${bigipLicense}; fi
 extension_packages:
   install_operations:
     - extensionType: do
@@ -100,7 +100,6 @@ post_onboard_enabled:
       - tmsh create ltm node geneve-tunnel address 10.131.0.2%1 monitor none 
       - tmsh create ltm pool geneve-tunnel members add { geneve-tunnel:0 } monitor none 
       - tmsh create ltm virtual forwarding_vs destination 0.0.0.0%1:any ip-protocol any vlans-enabled vlans add { geneve } translate-address disabled source-port preserve-strict pool geneve-tunnel mask any
-      - tmsh modify sys db provision.tmmcount value 1
       - tmsh modify sys db configsync.allowmanagement value enable
       - tmsh modify sys global-settings gui-setup disabled
       - tmsh modify sys db provision.managementeth value eth1
