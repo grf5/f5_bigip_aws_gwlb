@@ -174,16 +174,20 @@ data "aws_ami" "f5BigIP_GWLB_AMI" {
 data "template_file" "bigip_runtime_init_AZ1" {
   template = "${file("${path.module}/bigip_runtime_init_user_data.tpl")}"
   vars = {
-    bigip_license = "${var.bigipLicenseAZ1}",
+    bigipLicense = "${var.bigipLicenseAZ1}",
     bigipAdminPassword = "${var.bigipAdminPassword}"
+    bigipLicenseType = "${var.bigipLicenseType}"
+    healthCheckMonitorPort = "${var.healthCheckMonitorPort}"
   }
 }
 
 data "template_file" "bigip_runtime_init_AZ2" {
   template = "${file("${path.module}/bigip_runtime_init_user_data.tpl")}"
   vars = {
-    bigip_license = "${var.bigipLicenseAZ2}",
+    bigipLicense = "${var.bigipLicenseAZ2}",
     bigipAdminPassword = "${var.bigipAdminPassword}"
+    bigipLicenseType = "${var.bigipLicenseType}"
+    healthCheckMonitorPort = "${var.healthCheckMonitorPort}"
   }
 }
 
@@ -341,7 +345,7 @@ resource "aws_lb_target_group" "securityServicesTG" {
   port = 6081
   protocol = "GENEVE"
   health_check {
-    port = 65530
+    port = "${var.healthCheckMonitorPort}"
     protocol = "HTTPS"
     healthy_threshold = 2
     unhealthy_threshold = 2

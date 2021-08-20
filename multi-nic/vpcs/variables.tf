@@ -115,6 +115,11 @@ variable "securityServicesSubnetAZ2" {
   default = "10.250.250.0/24"
   type = string
 }
+variable "healthCheckMonitorPort" {
+  description = "TCP port used for monitoring TMM via iRule"
+  default = "65530"
+  type = string
+}
 variable get_address_url {
   type = string
   default = "https://api.ipify.org"
