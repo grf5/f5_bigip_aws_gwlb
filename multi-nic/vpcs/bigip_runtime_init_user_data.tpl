@@ -68,7 +68,7 @@ bigip_ready_enabled:
   - name: licensing
     type: inline
     commands:
-      - tmsh install sys license registration-key ${bigip_license}
+      - tmsh install sys license registration-key ${bigipLicense}
 extension_packages:
   install_operations:
     - extensionType: do
