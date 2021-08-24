@@ -346,7 +346,7 @@ resource "aws_lb_target_group" "securityServicesTG" {
   protocol = "GENEVE"
   health_check {
     port = "${var.healthCheckMonitorPort}"
-    protocol = "HTTPS"
+    protocol = "HTTP"
     healthy_threshold = 2
     unhealthy_threshold = 2
     timeout = 4
@@ -473,7 +473,7 @@ resource "aws_default_route_table" "juiceShopAppMainRT" {
 ##
 
 resource "aws_network_interface" "juiceShopAppAZ1ENI" {
-  subnet_id       = aws_subnet.juiceShopAppSubnetAZ1.id
+  subnet_id = aws_subnet.juiceShopAppSubnetAZ1.id
   tags = {
     Name = "juiceShopAppAZ1ENI"
   }
@@ -499,6 +499,7 @@ resource "aws_instance" "juiceShopAppAZ1" {
   key_name          = aws_key_pair.deployer.id
 	user_data = <<-EOF
               #!/bin/bash
+              sudo passwd 
               sudo apt update
               sudo apt -y upgrade
               sudo apt -y install apt-transport-https ca-certificates curl software-properties-common docker

@@ -14,95 +14,113 @@ cat << "EOF" > /config/cloud/manual_run.sh
 export F5_BIGIP_RUNTIME_INIT_LOG_LEVEL=silly
 
 # runtime init execution, with telemetry skipped
-f5-bigip-runtime-init --config-file /config/cloud/runtime-init-conf.yaml --skip-telemetry
+f5-bigip-runtime-init --config-file /config/cloud/runtime-init-conf.json --skip-telemetry
 EOF
 
-cat << "EOF" > /config/cloud/runtime-init-conf.yaml
----
-runtime_parameters:
-  - name: MGMT_IP
-    type: metadata
-    metadataProvider: 
-      environment: aws
-      type: network
-      field: local-ipv4s
-      index: 0
-  - name: MGMT_SUBNET
-    type: metadata
-    metadataProvider:
-      environment: aws
-      type: network
-      field: subnet-ipv4-cidr-block
-      index: 0
-  - name: MGMT_CIDR_MASK
-    type: metadata
-    metadataProvider:
-      environment: aws
-      type: network
-      field: subnet-ipv4-cidr-block
-      index: 0
-      ipcalc: bitmask
-  - name: MGMT_GATEWAY
-    type: metadata
-    metadataProvider:
-      environment: aws
-      type: network
-      field: local-ipv4s
-      index: 0
-      ipcalc: first
-  - name: MGMT_MASK
-    type: metadata
-    metadataProvider:
-      environment: aws
-      type: network
-      field: subnet-ipv4-cidr-block
-      index: 0
-      ipcalc: mask
-pre_onboard_enabled:
-  - name: provision_rest
-    type: inline
-    commands:
-      - /usr/bin/setdb provision.extramb 500
-      - /usr/bin/setdb restjavad.useextramb true
-bigip_ready_enabled:
-  - name: licensing
-    type: inline
-    commands:
-      - if [ "${bigipLicenseType}" -eq "BYOL" ]; then tmsh install sys license registration-key ${bigipLicense}; fi
-extension_packages:
-  install_operations:
-    - extensionType: do
-      extensionVersion: 1.20.0
-# We're not using DO currently because static ARP entries and tunnel local-address/remote-address is not supported
-# as of 22 Jun 2021 (DO v1.20.0) and mixing DO with TMSH commands in post_onboard_enabled have conflicted in testing.
-# Once DO supports these items, that will be the preferred configuration mechanism.
-post_onboard_enabled:
-  - name: manual_tmsh_configuration
-    type: inline
-    commands:
-      - source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready
-      - tmsh modify sys provision ltm level nominal
-      - source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready
-      - tmsh modify sys provision asm level nominal
-      - source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready
-      - tmsh modify auth user admin password ${bigipAdminPassword}
-      - tmsh modify sys ntp servers add { 0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org 3.pool.ntp.org }
-      - tmsh create net vlan dataplane interfaces add { 1.1 { untagged }} mtu 9001
-      - tmsh create net route-domain dataplane id 1 vlans add { dataplane }
-      - tmsh create net self inband-mgmt address `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1/`printf {{{ MGMT_IP }}} | cut -d "/" -f2` vlan dataplane allow-service all rules add { aws_gwlb_health_check }
-      - tmsh create net route dataplane-default network 0.0.0.0%1 gw {{{ MGMT_GATEWAY }}}%1
-      - tmsh create net tunnels tunnel geneve local-address `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1 remote-address any%1 profile geneve
-      - tmsh modify net route-domain dataplane vlans add { geneve } 
-      - tmsh create ltm virtual health_check destination `printf {{{ MGMT_IP }}} | cut -d "/" -f1`%1:65530 ip-protocol tcp mask 255.255.255.255 profiles add { http tcp } source 0.0.0.0%1/0 vlans-enabled vlans add { dataplane } 
-      - tmsh create net self geneve-tunnel address 10.131.0.1%1/24 vlan geneve allow-service all
-      - tmsh create net arp fake_arp_entry ip-address 10.131.0.2%1 mac-address ff:ff:ff:ff:ff:ff
-      - tmsh create ltm node geneve-tunnel address 10.131.0.2%1 monitor none 
-      - tmsh create ltm pool geneve-tunnel members add { geneve-tunnel:0 } monitor none 
-      - tmsh create ltm virtual forwarding_vs destination 0.0.0.0%1:any ip-protocol any vlans-enabled vlans add { geneve } translate-address disabled source-port preserve-strict pool geneve-tunnel mask any
-      - tmsh modify sys db provision.managementeth value eth1
-      - tmsh save /sys config
-      - sed -i 's/        1\.1 {/        1\.0 {/g' /config/bigip_base.conf
-      - reboot
+cat << "EOF" > /config/cloud/aws_gwlb_health_check.tcl
+ltm rule aws_gwlb_health_check {
+when HTTP_REQUEST {
+    HTTP::respond 200 content OK
+    HTTP::close
+    return
+  }
+}
+EOF
+
+cat << "EOF" > /config/cloud/runtime-init-conf.json
+{
+    "runtime_parameters": [
+        {
+            "name": "MGMT_IP",
+            "type": "metadata",
+            "metadataProvider": {
+                "environment": "aws",
+                "type": "network",
+                "field": "local-ipv4s",
+                "index": 0
+            }
+        },
+        {
+            "name": "MGMT_GATEWAY",
+            "type": "metadata",
+            "metadataProvider": {
+                "environment": "aws",
+                "type": "network",
+                "field": "local-ipv4s",
+                "index": 0,
+                "ipcalc": "first"
+            }
+        }
+    ],
+    "pre_onboard_enabled": [
+        {
+            "name": "provision_rest",
+            "type": "inline",
+            "commands": [
+                "/usr/bin/setdb provision.extramb 500",
+                "/usr/bin/setdb restjavad.useextramb true"
+            ]
+        }
+    ],
+    "bigip_ready_enabled": [
+        {
+            "name": "licensing",
+            "type": "inline",
+            "commands": [
+                "if [ \"${bigipLicenseType}\" = \"BYOL\" ]; then tmsh install sys license registration-key ${bigipLicense}; fi"
+            ]
+        }
+    ],
+    "extension_packages": {
+        "install_operations": [
+            {
+                "extensionType": "do",
+                "extensionVersion": "1.21.1",
+                "extensionUrl": "https://github.com/F5Networks/f5-declarative-onboarding/releases/download/v1.21.1/f5-declarative-onboarding-1.21.1-2.noarch.rpm",
+                "extensionHash": "4ddf98bfec0f6272ac1c76a81b806fc1f16bae03f39a74e2468b2b0e7b96be09"
+            },
+            {
+                "extensionType": "as3",
+                "extensionVersion": "3.26.1",
+                "extensionUrl": "https://github.com/F5Networks/f5-appsvcs-extension/releases/download/v3.26.1/f5-appsvcs-3.26.1-1.noarch.rpm",
+                "extensionHash": "1a5c3c754165a6b7739a15e1f80e4caa678a1fa8fc1b3033e61992663295cf81"
+            }
+        ]
+    },
+    "post_onboard_enabled": [
+        {
+            "name": "manual_tmsh_configuration",
+            "type": "inline",
+            "commands": [
+                "source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready",
+                "tmsh modify sys provision ltm level nominal",
+                "source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready",
+                "tmsh modify sys provision asm level nominal",
+                "source /usr/lib/bigstart/bigip-ready-functions; wait_bigip_ready",
+                "tmsh modify sys global-settings gui-setup disabled",
+                "tmsh modify auth user admin password ${bigipAdminPassword}",
+                "tmsh modify sys ntp servers add { 0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org 3.pool.ntp.org }",
+                "tmsh create net vlan dataplane interfaces add { 1.1 { untagged }} mtu 9001",
+                "tmsh create net route-domain dataplane id 1 vlans add { dataplane }",
+                "tmsh create net self inband-mgmt address `printf {{{ MGMT_IP }}} | cut -d \"/\" -f1`%1/`printf {{{ MGMT_IP }}} | cut -d \"/\" -f2` vlan dataplane allow-service all",
+                "tmsh create net route dataplane-default network 0.0.0.0%1 gw {{{ MGMT_GATEWAY }}}%1",
+                "tmsh create net tunnels tunnel geneve local-address `printf {{{ MGMT_IP }}} | cut -d \"/\" -f1`%1 remote-address any%1 profile geneve",
+                "tmsh modify net route-domain dataplane vlans add { geneve }",
+                "tmsh load sys config merge file /config/cloud/aws_gwlb_health_check.tcl",
+                "tmsh create ltm virtual aws_gwlb_health_check destination `printf {{{ MGMT_IP }}} | cut -d \"/\" -f1`%1:65530 ip-protocol tcp mask 255.255.255.255 profiles add { http tcp } source 0.0.0.0%1/0 vlans-enabled vlans add { dataplane } rules { aws_gwlb_health_check }",
+                "tmsh create net self geneve-tunnel address 10.131.0.1%1/24 vlan geneve allow-service all",
+                "tmsh create net arp fake_arp_entry ip-address 10.131.0.2%1 mac-address ff:ff:ff:ff:ff:ff",
+                "tmsh create ltm node geneve-tunnel address 10.131.0.2%1 monitor none",
+                "tmsh create ltm pool geneve-tunnel members add { geneve-tunnel:0 } monitor none",
+                "tmsh create ltm virtual forwarding_vs destination 0.0.0.0%1:any ip-protocol any vlans-enabled vlans add { geneve } translate-address disabled source-port preserve-strict pool geneve-tunnel mask any",
+                "tmsh modify sys db provision.managementeth value eth1",
+                "tmsh save /sys config",
+                "sed -i 's/        1\\.1 {/        1\\.0 {/g' /config/bigip_base.conf",
+                "reboot"
+            ]
+        }
+    ]
+}
 EOF
 
 ### runcmd:
@@ -121,4 +139,4 @@ export F5_BIGIP_RUNTIME_INIT_LOG_LEVEL=silly
 bash /var/config/rest/downloads/f5-bigip-runtime-init-1.2.1-1.gz.run -- "--cloud aws"
 
 # Runtime Init execution on configuration file created above
-f5-bigip-runtime-init --config-file /config/cloud/runtime-init-conf.yaml
+f5-bigip-runtime-init --config-file /config/cloud/runtime-init-conf.json
