@@ -153,23 +153,41 @@ resource "aws_default_route_table" "securityServicesMainRT" {
 ## BIG-IP AMI/Onboarding Config
 ##
 
-data "aws_ami" "f5BigIP_GWLB_AMI" {
-  most_recent      = true
-  name_regex       = "BIG-IP.*GWLB.*"
-  owners           = ["self","065972273535"]
+variable "bigip_version" {
+  type = string
+  description = "the base TMOS version to use - most recent version will be used"
+  default =  "16.1"
 }
-
+data "aws_ami" "f5BigIP_GWLB_AMI" {
+  most_recent = true
+  name_regex = ".*${lookup(var.bigip_ami_mapping, var.bigipLicenseType)}.*"
+  filter {
+    name = "name"
+    values = ["F5 BIGIP-${var.bigip_version}*"]
+  }
+  filter {
+    name = "virtualization-type"
+    values = ["hvm"]
+  }
+  owners = ["679593333241"]
+}
 data "template_file" "bigip_runtime_init_AZ1" {
   template = "${file("${path.module}/bigip_runtime_init_user_data.tpl")}"
   vars = {
-    bigip_license = "${var.bigipLicenseAZ1}"
+    bigipLicense = "${var.bigipLicenseAZ1}",
+    bigipAdminPassword = "${var.bigipAdminPassword}"
+    bigipLicenseType = "${var.bigipLicenseType}"
+    healthCheckMonitorPort = "${var.healthCheckMonitorPort}"
   }
 }
 
 data "template_file" "bigip_runtime_init_AZ2" {
   template = "${file("${path.module}/bigip_runtime_init_user_data.tpl")}"
   vars = {
-    bigip_license = "${var.bigipLicenseAZ2}"
+    bigipLicense = "${var.bigipLicenseAZ2}",
+    bigipAdminPassword = "${var.bigipAdminPassword}"
+    bigipLicenseType = "${var.bigipLicenseType}"
+    healthCheckMonitorPort = "${var.healthCheckMonitorPort}"
   }
 }
 
@@ -177,25 +195,50 @@ data "template_file" "bigip_runtime_init_AZ2" {
 ## AZ1 F5 BIG-IP Instance
 ##
 
-resource "aws_network_interface" "F5_BIGIP_AZ1ENI_SINGLE_NIC" {
+resource "aws_network_interface" "F5_BIGIP_AZ1ENI_DATA" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ1.id
-  source_dest_check = false
   tags = {
-    Name = "F5_BIGIP_AZ1ENI"
+    Name = "F5_BIGIP_AZ1ENI_DATA"
   }
 }
 
-resource "aws_eip" "F5_BIGIP_AZ1EIP" {
-  vpc = true
-  network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_SINGLE_NIC.id
-  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_SINGLE_NIC.private_ip
-/*
-  depends_on = [
-    time_sleep.F5_BIGIP_AZ1EIPdelay
-  ]
-*/
+resource "aws_network_interface" "F5_BIGIP_AZ1ENI_MGMT" {
+  subnet_id       = aws_subnet.securityServicesSubnetAZ1.id
   tags = {
-    Name = "F5_BIGIP_AZ1EIP"
+    Name = "F5_BIGIP_AZ1ENI_MGMT"
+  }
+}
+
+resource "aws_network_interface" "F5_BIGIP_AZ1ENI_CLONE_POOL" {
+  subnet_id       = aws_subnet.securityServicesSubnetAZ1.id
+  tags = {
+    Name = "F5_BIGIP_AZ1ENI_CLONE_POOL"
+  }
+}
+
+resource "aws_eip" "F5_BIGIP_AZ1EIP_MGMT" {
+  vpc = true
+  network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.private_ip
+  # The IGW needs to exist before the EIP can be created
+  depends_on = [
+    aws_internet_gateway.securityServicesIGW
+  ]
+  tags = {
+    Name = "F5_BIGIP_AZ1EIP_MGMT"
+  }
+}
+
+resource "aws_eip" "F5_BIGIP_AZ1EIP_DATA" {
+  vpc = true
+  network_interface = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.private_ip
+  # The IGW needs to exist before the EIP can be created
+  depends_on = [
+    aws_internet_gateway.securityServicesIGW
+  ]
+  tags = {
+    Name = "F5_BIGIP_AZ1EIP_DATA"
   }
 }
 
@@ -206,11 +249,20 @@ resource "aws_instance" "F5_BIGIP_AZ1" {
   key_name          = aws_key_pair.deployer.id
 	user_data = "${data.template_file.bigip_runtime_init_AZ1.rendered}"
   network_interface {
-    network_interface_id = aws_network_interface.F5_BIGIP_AZ1ENI_SINGLE_NIC.id
+    network_interface_id = aws_network_interface.F5_BIGIP_AZ1ENI_DATA.id
     device_index = 0
   }
+  network_interface {
+    network_interface_id = aws_network_interface.F5_BIGIP_AZ1ENI_MGMT.id
+    device_index = 1
+  }
+  network_interface {
+    network_interface_id = aws_network_interface.F5_BIGIP_AZ1ENI_CLONE_POOL.id
+    device_index = 2
+  }
+  # Let's ensure an EIP is provisioned so licensing and bigip-runtime-init runs successfully
   depends_on = [
-    aws_eip.F5_BIGIP_AZ1EIP
+    aws_eip.F5_BIGIP_AZ1EIP_DATA
   ]
   tags = {
     Name = "${var.projectPrefix}-F5_BIGIP_AZ1-${random_id.buildSuffix.hex}"
@@ -221,28 +273,52 @@ resource "aws_instance" "F5_BIGIP_AZ1" {
 ## AZ2 F5 BIG-IP Instance
 ##
 
-resource "aws_network_interface" "F5_BIGIP_AZ2ENI_SINGLE_NIC" {
+resource "aws_network_interface" "F5_BIGIP_AZ2ENI_DATA" {
   subnet_id       = aws_subnet.securityServicesSubnetAZ2.id
-  source_dest_check = false
   tags = {
-    Name = "F5_BIGIP_AZ2ENI"
+    Name = "F5_BIGIP_AZ2ENI_DATA"
   }
 }
 
-resource "aws_eip" "F5_BIGIP_AZ2EIP" {
+resource "aws_network_interface" "F5_BIGIP_AZ2ENI_MGMT" {
+  subnet_id       = aws_subnet.securityServicesSubnetAZ2.id
+  tags = {
+    Name = "F5_BIGIP_AZ2ENI_MGMT"
+  }
+}
+
+resource "aws_network_interface" "F5_BIGIP_AZ2ENI_CLONE_POOL" {
+  subnet_id       = aws_subnet.securityServicesSubnetAZ2.id
+  tags = {
+    Name = "F5_BIGIP_AZ2ENI_CLONE_POOL"
+  }
+}
+
+resource "aws_eip" "F5_BIGIP_AZ2EIP_MGMT" {
   vpc = true
-  network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_SINGLE_NIC.id
-  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_SINGLE_NIC.private_ip
-/*
+  network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.private_ip
+  # The IGW needs to exist before the EIP can be created
   depends_on = [
-    time_sleep.F5_BIGIP_AZ2EIPdelay
+    aws_internet_gateway.securityServicesIGW
   ]
-*/
   tags = {
-    Name = "F5_BIGIP_AZ2EIP"
+    Name = "F5_BIGIP_AZ2EIP_MGMT"
   }
 }
 
+resource "aws_eip" "F5_BIGIP_AZ2EIP_DATA" {
+  vpc = true
+  network_interface = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.id
+  associate_with_private_ip = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.private_ip
+  # The IGW needs to exist before the EIP can be created
+  depends_on = [
+    aws_internet_gateway.securityServicesIGW
+  ]
+  tags = {
+    Name = "F5_BIGIP_AZ2EIP_DATA"
+  }
+}
 resource "aws_instance" "F5_BIGIP_AZ2" {
   ami               = data.aws_ami.f5BigIP_GWLB_AMI.id
   instance_type     = "c5.xlarge"
@@ -250,11 +326,20 @@ resource "aws_instance" "F5_BIGIP_AZ2" {
   key_name          = aws_key_pair.deployer.id
 	user_data = "${data.template_file.bigip_runtime_init_AZ2.rendered}"
   network_interface {
-    network_interface_id = aws_network_interface.F5_BIGIP_AZ2ENI_SINGLE_NIC.id
+    network_interface_id = aws_network_interface.F5_BIGIP_AZ2ENI_DATA.id
     device_index = 0
   }
+  network_interface {
+    network_interface_id = aws_network_interface.F5_BIGIP_AZ2ENI_MGMT.id
+    device_index = 1
+  }
+  network_interface {
+    network_interface_id = aws_network_interface.F5_BIGIP_AZ2ENI_CLONE_POOL.id
+    device_index = 2
+  }
+  # Let's ensure an EIP is provisioned so licensing and bigip-runtime-init runs successfully
   depends_on = [
-    aws_eip.F5_BIGIP_AZ2EIP
+    aws_eip.F5_BIGIP_AZ2EIP_DATA
   ]
   tags = {
     Name = "${var.projectPrefix}-F5_BIGIP_AZ2-${random_id.buildSuffix.hex}"
@@ -282,8 +367,8 @@ resource "aws_lb_target_group" "securityServicesTG" {
   port = 6081
   protocol = "GENEVE"
   health_check {
-    port = 443
-    protocol = "HTTPS"
+    port = "${var.healthCheckMonitorPort}"
+    protocol = "HTTP"
     healthy_threshold = 2
     unhealthy_threshold = 2
     timeout = 4
@@ -317,28 +402,6 @@ resource "aws_vpc_endpoint_service" "securityServicesES" {
     Name = "${var.projectPrefix}-securityServicesES-${random_id.buildSuffix.hex}"
   }
 }
-
-/*
-resource "aws_vpc_endpoint" "secSvcsEndpointAZ1" {
-  service_name = aws_vpc_endpoint_service.securityServicesES.service_name
-  vpc_id = aws_vpc.securityServicesVPC.id
-  vpc_endpoint_type = aws_vpc_endpoint_service.securityServicesES.service_type
-  subnet_ids = [aws_subnet.securityServicesSubnetAZ1.id]
-  tags = {
-    Name = "${var.projectPrefix}-securityServicesES-${random_id.buildSuffix.hex}"
-  }
-}
-
-resource "aws_vpc_endpoint" "secSvcsEndpointAZ2" {
-  service_name = aws_vpc_endpoint_service.securityServicesES.service_name
-  vpc_id = aws_vpc.securityServicesVPC.id
-  vpc_endpoint_type = aws_vpc_endpoint_service.securityServicesES.service_type
-  subnet_ids = [aws_subnet.securityServicesSubnetAZ2.id]
-  tags = {
-    Name = "${var.projectPrefix}-securityServicesES-${random_id.buildSuffix.hex}"
-  }
-}
-*/
 
 ####################################################################
 ########################## Juice Shop App ##########################
@@ -432,30 +495,20 @@ resource "aws_default_route_table" "juiceShopAppMainRT" {
 ##
 
 resource "aws_network_interface" "juiceShopAppAZ1ENI" {
-  subnet_id       = aws_subnet.juiceShopAppSubnetAZ1.id
+  subnet_id = aws_subnet.juiceShopAppSubnetAZ1.id
   tags = {
     Name = "juiceShopAppAZ1ENI"
   }
 }
 
-/*
-resource "time_sleep" "juiceShopAppAZ1EIPdelay" {
-  create_duration = "30s"
-  depends_on = [
-    aws_network_interface.juiceShopAppAZ1ENI
-  ]
-}
-*/
-
 resource "aws_eip" "juiceShopAppAZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAppAZ1ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAppAZ1ENI.private_ip
-/*
+  # The IGW needs to exist before the EIP can be created
   depends_on = [
-    time_sleep.juiceShopAppAZ1EIPdelay
+    aws_internet_gateway.juiceShopAppIGW
   ]
-*/
   tags = {
     Name = "juiceShopAppAZ1EIP"
   }
@@ -468,6 +521,7 @@ resource "aws_instance" "juiceShopAppAZ1" {
   key_name          = aws_key_pair.deployer.id
 	user_data = <<-EOF
               #!/bin/bash
+              sudo passwd 
               sudo apt update
               sudo apt -y upgrade
               sudo apt -y install apt-transport-https ca-certificates curl software-properties-common docker
@@ -485,6 +539,7 @@ resource "aws_instance" "juiceShopAppAZ1" {
     network_interface_id = aws_network_interface.juiceShopAppAZ1ENI.id
     device_index = 0
   }
+  # Let's ensure an EIP is provisioned so user-data can run successfully
   depends_on = [
     aws_eip.juiceShopAppAZ1EIP
   ]
@@ -498,30 +553,20 @@ resource "aws_instance" "juiceShopAppAZ1" {
 ##
 
 resource "aws_network_interface" "juiceShopAppAZ2ENI" {
-  subnet_id       = aws_subnet.juiceShopAppSubnetAZ2.id
+  subnet_id = aws_subnet.juiceShopAppSubnetAZ2.id
   tags = {
     Name = "juiceShopAppAZ2ENI"
   }
 }
 
-/*
-resource "time_sleep" "juiceShopAppAZ2EIPdelay" {
-  create_duration = "30s"
-  depends_on = [
-    aws_network_interface.juiceShopAppAZ2ENI
-  ]
-}
-*/
-
 resource "aws_eip" "juiceShopAppAZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAppAZ2ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAppAZ2ENI.private_ip
-/*
+  # The IGW needs to exist before the EIP can be created
   depends_on = [
-    time_sleep.juiceShopAppAZ2EIPdelay
+    aws_internet_gateway.juiceShopAppIGW
   ]
-*/
   tags = {
     Name = "juiceShopAppAZ2EIP"
   }
@@ -551,6 +596,7 @@ resource "aws_instance" "juiceShopAppAZ2" {
     network_interface_id = aws_network_interface.juiceShopAppAZ2ENI.id
     device_index = 0
   }
+  # Let's ensure an EIP is provisioned so user-data can run successfully
   depends_on = [
     aws_eip.juiceShopAppAZ2EIP
   ]
@@ -804,24 +850,14 @@ resource "aws_network_interface" "juiceShopAPIAZ1ENI" {
   }
 }
 
-/*
-resource "time_sleep" "juiceShopAPIAZ1EIPdelay" {
-  create_duration = "30s"
-  depends_on = [
-    aws_network_interface.juiceShopAPIAZ1ENI
-  ]
-}
-*/
-
 resource "aws_eip" "juiceShopAPIAZ1EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAPIAZ1ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAPIAZ1ENI.private_ip
-/*
+  # The IGW needs to exist before the EIP can be created
   depends_on = [
-    time_sleep.juiceShopAPIAZ1EIPdelay
+    aws_internet_gateway.juiceShopAPIIGW
   ]
-*/
   tags = {
     Name = "juiceShopAPIAZ1EIP"
   }
@@ -851,6 +887,7 @@ resource "aws_instance" "juiceShopAPIAZ1" {
     network_interface_id = aws_network_interface.juiceShopAPIAZ1ENI.id
     device_index = 0
   }
+  # Let's ensure an EIP is provisioned so user-data can run successfully
   depends_on = [
     aws_eip.juiceShopAPIAZ1EIP
   ]
@@ -869,23 +906,15 @@ resource "aws_network_interface" "juiceShopAPIAZ2ENI" {
     Name = "juiceShopAPIAZ2ENI"
   }
 }
-/*
-resource "time_sleep" "juiceShopAPIAZ2EIPdelay" {
-  create_duration = "30s"
-  depends_on = [
-    aws_network_interface.juiceShopAPIAZ2ENI
-  ]
-}
-*/
+
 resource "aws_eip" "juiceShopAPIAZ2EIP" {
   vpc = true
   network_interface = aws_network_interface.juiceShopAPIAZ2ENI.id
   associate_with_private_ip = aws_network_interface.juiceShopAPIAZ2ENI.private_ip
-/*
+  # The IGW needs to exist before the EIP can be created
   depends_on = [
-    time_sleep.juiceShopAPIAZ2EIPdelay
+    aws_internet_gateway.juiceShopAPIIGW
   ]
-*/
   tags = {
     Name = "juiceShopAPIAZ2EIP"
   }
@@ -915,6 +944,7 @@ resource "aws_instance" "juiceShopAPIAZ2" {
     network_interface_id = aws_network_interface.juiceShopAPIAZ2ENI.id
     device_index = 0
   }
+  # Let's ensure an EIP is provisioned so user-data can run successfully
   depends_on = [
     aws_eip.juiceShopAPIAZ2EIP
   ]

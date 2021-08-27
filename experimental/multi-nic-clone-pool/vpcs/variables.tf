@@ -24,6 +24,24 @@ variable "awsAz2" {
   type        = string
   default     = null
 }
+variable "bigipLicenseType" {
+  type = string
+  description = "license type BYOL or PAYG"
+  default = "PAYG"
+}
+variable "bigip_ami_mapping" {
+  description = "mapping AMIs for PAYG and BYOL"
+  default = {
+    "BYOL" = "BYOL-All Modules 2Boot Loc"
+    "PAYG" = "PAYG-Best 10Gbps"
+  }
+}
+variable "bigipAdminPassword" {
+  description = "BIG-IP Admin Password (set on first boot)"
+  default = "f5c0nfig123!"
+  type = string
+  sensitive = true
+}
 variable "bigipLicenseAZ1" {
   description = "BIG-IP License for AZ1 instance"
   type = string
@@ -95,6 +113,11 @@ variable "securityServicesSubnetAZ1" {
 variable "securityServicesSubnetAZ2" {
   description = "Subnet for Security Services AZ2"
   default = "10.250.250.0/24"
+  type = string
+}
+variable "healthCheckMonitorPort" {
+  description = "TCP port used for monitoring TMM via iRule"
+  default = "65530"
   type = string
 }
 variable get_address_url {
